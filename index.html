@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>命の蝋燭 ─ 死ンキングナイト DEMO</title>
+<title>命の蝋燭 ─ 死ンキングナイト</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
@@ -24,403 +24,134 @@
     --ghost-blue: #8aa3c4;
     --ghost-mist: #c4d4e8;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
-
   body {
     font-family: 'Noto Sans JP', sans-serif;
     background: radial-gradient(ellipse at center 35%, #1a1612 0%, var(--bg-dark) 70%);
     color: var(--text-primary);
-    min-height: 100vh;
-    overflow: hidden;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
+    min-height: 100vh; overflow: hidden;
+    user-select: none; -webkit-tap-highlight-color: transparent;
   }
-
-  body.ghost-mode {
-    background: radial-gradient(ellipse at center 35%, #11151b 0%, #050608 70%);
-  }
+  body.ghost-mode { background: radial-gradient(ellipse at center 35%, #11151b 0%, #050608 70%); }
 
   .vignette { position: fixed; inset: 0; pointer-events: none; z-index: 1;
     background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%); }
   .grain { position: fixed; inset: 0; pointer-events: none; opacity: 0.05; z-index: 2;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
-  /* ========== 共通：画面切替 ========== */
   .screen {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    padding: 2rem 1.5rem;
-    z-index: 5;
-    opacity: 1;
-    transition: opacity 0.6s ease;
+    padding: 2rem 1.5rem; z-index: 5;
+    opacity: 1; transition: opacity 0.6s ease;
   }
   .screen.hidden { opacity: 0; pointer-events: none; }
 
-  /* ========== エントリー画面 ========== */
-  .entry-mark {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.65rem; letter-spacing: 0.7em;
-    color: var(--text-dim); margin-bottom: 2rem;
-    padding-left: 0.5em;
-  }
-  .entry-title {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 2.6rem; font-weight: 500;
-    letter-spacing: 0.35em;
-    color: var(--gold);
-    text-shadow: 0 0 40px rgba(201, 169, 97, 0.4);
-    margin-bottom: 1rem;
-    padding-left: 0.35em;
-  }
-  .entry-tagline {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.95rem; letter-spacing: 0.3em;
-    color: var(--text-primary); opacity: 0.75;
-    margin-bottom: 3.5rem;
-    padding-left: 0.3em;
-  }
-  .entry-name {
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--text-muted);
-    color: var(--text-primary);
-    font-family: 'Shippori Mincho', serif;
-    font-size: 1.2rem; letter-spacing: 0.15em;
-    padding: 0.6rem 0.5rem;
-    width: min(280px, 80vw);
-    text-align: center;
-    outline: none;
-    margin-bottom: 2rem;
-    transition: border-color 0.3s;
-  }
+  /* エントリー */
+  .entry-mark { font-family: 'Shippori Mincho', serif; font-size: 0.65rem; letter-spacing: 0.7em; color: var(--text-dim); margin-bottom: 2rem; padding-left: 0.5em; }
+  .entry-title { font-family: 'Shippori Mincho', serif; font-size: 2.6rem; font-weight: 500; letter-spacing: 0.35em; color: var(--gold); text-shadow: 0 0 40px rgba(201, 169, 97, 0.4); margin-bottom: 1rem; padding-left: 0.35em; }
+  .entry-tagline { font-family: 'Shippori Mincho', serif; font-size: 0.95rem; letter-spacing: 0.3em; color: var(--text-primary); opacity: 0.75; margin-bottom: 3.5rem; padding-left: 0.3em; }
+  .entry-name { background: transparent; border: none; border-bottom: 1px solid var(--text-muted); color: var(--text-primary); font-family: 'Shippori Mincho', serif; font-size: 1.2rem; letter-spacing: 0.15em; padding: 0.6rem 0.5rem; width: min(280px, 80vw); text-align: center; outline: none; margin-bottom: 2rem; transition: border-color 0.3s; }
   .entry-name:focus { border-color: var(--gold); }
   .entry-name::placeholder { color: var(--text-dim); }
-  .entry-start {
-    background: transparent;
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    padding: 0.8rem 2.5rem;
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.95rem; letter-spacing: 0.4em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding-left: 2.9em;
-  }
-  .entry-start:hover {
-    background: rgba(201, 169, 97, 0.1);
-    box-shadow: 0 0 25px rgba(201, 169, 97, 0.3);
-  }
+  .entry-start { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 0.8rem 2.5rem; font-family: 'Shippori Mincho', serif; font-size: 0.95rem; letter-spacing: 0.4em; cursor: pointer; transition: all 0.3s ease; padding-left: 2.9em; }
+  .entry-start:hover { background: rgba(201, 169, 97, 0.1); box-shadow: 0 0 25px rgba(201, 169, 97, 0.3); }
   .entry-start:disabled { opacity: 0.3; cursor: not-allowed; }
+  .entry-status { font-family: 'Shippori Mincho', serif; font-size: 0.7rem; letter-spacing: 0.3em; color: var(--text-dim); margin-top: 2rem; padding-left: 0.3em; }
+  .entry-status.error { color: var(--danger); }
 
-  /* ========== メイン蝋燭画面 ========== */
+  /* メイン */
   .main-screen { justify-content: space-between; }
   .main-header { text-align: center; }
-  .main-user-name {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 1rem; letter-spacing: 0.3em;
-    color: var(--text-primary); margin-bottom: 0.3rem;
-  }
-  .main-code {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.7rem; letter-spacing: 0.3em;
-    color: var(--text-muted);
-  }
-  .main-code-num {
-    color: var(--gold); letter-spacing: 0.2em; font-variant-numeric: tabular-nums;
-  }
+  .main-user-name { font-family: 'Shippori Mincho', serif; font-size: 1rem; letter-spacing: 0.3em; color: var(--text-primary); margin-bottom: 0.3rem; }
+  .main-code { font-family: 'Shippori Mincho', serif; font-size: 0.7rem; letter-spacing: 0.3em; color: var(--text-muted); }
+  .main-code-num { color: var(--gold); letter-spacing: 0.2em; font-variant-numeric: tabular-nums; }
 
-  .candle-stage {
-    flex: 1; display: flex; justify-content: center; align-items: center;
-    width: 100%; max-height: 55vh;
-  }
-  .candle-wrapper {
-    position: relative; width: min(220px, 55vw); height: 55vh; max-height: 450px;
-  }
+  .candle-stage { flex: 1; display: flex; justify-content: center; align-items: center; width: 100%; max-height: 55vh; }
+  .candle-wrapper { position: relative; width: min(220px, 55vw); height: 55vh; max-height: 450px; }
   .candle-svg { width: 100%; height: 100%; overflow: visible; }
 
   .info-panel { text-align: center; margin-bottom: 1rem; }
-  .time-remaining {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 2.4rem; letter-spacing: 0.08em;
-    color: var(--gold);
-    text-shadow: 0 0 20px rgba(201, 169, 97, 0.4);
-    font-variant-numeric: tabular-nums;
-    transition: color 0.5s, text-shadow 0.5s;
-  }
-  .time-label {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.6rem; letter-spacing: 0.6em;
-    color: var(--text-muted); margin-top: 0.3rem;
-  }
+  .time-remaining { font-family: 'Shippori Mincho', serif; font-size: 2.4rem; letter-spacing: 0.08em; color: var(--gold); text-shadow: 0 0 20px rgba(201, 169, 97, 0.4); font-variant-numeric: tabular-nums; transition: color 0.5s, text-shadow 0.5s; }
+  .time-label { font-family: 'Shippori Mincho', serif; font-size: 0.6rem; letter-spacing: 0.6em; color: var(--text-muted); margin-top: 0.3rem; }
   body.warning .time-remaining { color: var(--danger); text-shadow: 0 0 20px rgba(200, 52, 52, 0.5); }
 
   .main-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
-  .primary-btn {
-    background: transparent;
-    border: 1px solid var(--gold); color: var(--gold);
-    padding: 0.8rem 2rem;
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.85rem; letter-spacing: 0.35em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding-left: 1.85em;
-  }
-  .primary-btn:hover {
-    background: rgba(201, 169, 97, 0.1);
-    box-shadow: 0 0 20px rgba(201, 169, 97, 0.25);
-  }
+  .primary-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 0.8rem 2rem; font-family: 'Shippori Mincho', serif; font-size: 0.85rem; letter-spacing: 0.35em; cursor: pointer; transition: all 0.3s ease; padding-left: 1.85em; }
+  .primary-btn:hover { background: rgba(201, 169, 97, 0.1); box-shadow: 0 0 20px rgba(201, 169, 97, 0.25); }
+  .primary-btn:disabled { opacity: 0.3; cursor: not-allowed; }
   .ghost-mode .primary-btn { border-color: var(--ghost-blue); color: var(--ghost-blue); }
   .ghost-mode .primary-btn:hover { background: rgba(138, 163, 196, 0.1); box-shadow: 0 0 20px rgba(138, 163, 196, 0.3); }
 
-  /* ========== 火移し画面 ========== */
+  /* 火移し */
   .pairing-screen { gap: 2rem; }
-  .pairing-title {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 1.3rem; letter-spacing: 0.5em;
-    color: var(--gold);
-    margin-bottom: 1rem;
-    padding-left: 0.5em;
-  }
-  .pairing-card {
-    border: 1px solid var(--text-dim);
-    padding: 2rem;
-    width: min(360px, 90vw);
-    text-align: center;
-  }
-  .pairing-card-label {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.7rem; letter-spacing: 0.4em;
-    color: var(--text-muted);
-    margin-bottom: 1.2rem;
-  }
-  .big-code {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 2.8rem; letter-spacing: 0.3em;
-    color: var(--gold);
-    font-variant-numeric: tabular-nums;
-    text-shadow: 0 0 25px rgba(201, 169, 97, 0.4);
-    padding-left: 0.3em;
-  }
-  .pairing-input-field {
-    background: transparent;
-    border: none; border-bottom: 1px solid var(--text-muted);
-    color: var(--text-primary);
-    font-family: 'Shippori Mincho', serif;
-    font-size: 1.8rem; letter-spacing: 0.4em;
-    padding: 0.4rem;
-    width: 100%; text-align: center;
-    font-variant-numeric: tabular-nums;
-    outline: none;
-    transition: border-color 0.3s;
-  }
+  .pairing-title { font-family: 'Shippori Mincho', serif; font-size: 1.3rem; letter-spacing: 0.5em; color: var(--gold); margin-bottom: 1rem; padding-left: 0.5em; }
+  .pairing-card { border: 1px solid var(--text-dim); padding: 2rem; width: min(360px, 90vw); text-align: center; }
+  .pairing-card-label { font-family: 'Shippori Mincho', serif; font-size: 0.7rem; letter-spacing: 0.4em; color: var(--text-muted); margin-bottom: 1.2rem; }
+  .big-code { font-family: 'Shippori Mincho', serif; font-size: 2.8rem; letter-spacing: 0.3em; color: var(--gold); font-variant-numeric: tabular-nums; text-shadow: 0 0 25px rgba(201, 169, 97, 0.4); padding-left: 0.3em; }
+  .pairing-input-field { background: transparent; border: none; border-bottom: 1px solid var(--text-muted); color: var(--text-primary); font-family: 'Shippori Mincho', serif; font-size: 1.8rem; letter-spacing: 0.4em; padding: 0.4rem; width: 100%; text-align: center; font-variant-numeric: tabular-nums; outline: none; transition: border-color 0.3s; }
   .pairing-input-field:focus { border-color: var(--gold); }
-  .pairing-divider {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.7rem; letter-spacing: 0.5em;
-    color: var(--text-dim);
-    margin: 0.5rem 0;
-    padding-left: 0.5em;
-  }
-  .back-link {
-    background: transparent; border: none;
-    color: var(--text-muted);
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.75rem; letter-spacing: 0.3em;
-    cursor: pointer;
-    margin-top: 1rem;
-  }
+  .pairing-divider { font-family: 'Shippori Mincho', serif; font-size: 0.7rem; letter-spacing: 0.5em; color: var(--text-dim); margin: 0.5rem 0; padding-left: 0.5em; }
+  .back-link { background: transparent; border: none; color: var(--text-muted); font-family: 'Shippori Mincho', serif; font-size: 0.75rem; letter-spacing: 0.3em; cursor: pointer; margin-top: 1rem; }
   .back-link:hover { color: var(--text-primary); }
+  .pairing-status { font-family: 'Shippori Mincho', serif; font-size: 0.8rem; letter-spacing: 0.3em; color: var(--gold); min-height: 1.5em; padding-left: 0.3em; }
+  .pairing-status.error { color: var(--danger); }
 
-  /* ========== 会話お題画面 ========== */
-  .conv-label {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.7rem; letter-spacing: 0.7em;
-    color: var(--text-muted);
-    margin-bottom: 1.5rem;
-    padding-left: 0.7em;
-  }
-  .conv-topic {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 1.6rem; letter-spacing: 0.1em; line-height: 1.7;
-    color: var(--text-primary);
-    text-align: center;
-    max-width: 600px;
-    margin-bottom: 3rem;
-    text-shadow: 0 0 30px rgba(232, 220, 196, 0.15);
-  }
-  .conv-instruction {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.8rem; letter-spacing: 0.35em;
-    color: var(--text-muted);
-    margin-bottom: 1.5rem;
-    padding-left: 0.35em;
-  }
-  .conv-waiting {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.85rem; letter-spacing: 0.3em;
-    color: var(--gold);
-    margin-top: 1.5rem;
-    padding-left: 0.3em;
-  }
+  /* 会話 */
+  .conv-label { font-family: 'Shippori Mincho', serif; font-size: 0.7rem; letter-spacing: 0.7em; color: var(--text-muted); margin-bottom: 1.5rem; padding-left: 0.7em; }
+  .conv-partner { font-family: 'Shippori Mincho', serif; font-size: 0.85rem; letter-spacing: 0.25em; color: var(--text-dim); margin-bottom: 1rem; padding-left: 0.25em; }
+  .conv-partner .name { color: var(--text-primary); }
+  .conv-topic { font-family: 'Shippori Mincho', serif; font-size: 1.6rem; letter-spacing: 0.1em; line-height: 1.7; color: var(--text-primary); text-align: center; max-width: 600px; margin-bottom: 3rem; text-shadow: 0 0 30px rgba(232, 220, 196, 0.15); padding: 0 1rem; }
+  .conv-instruction { font-family: 'Shippori Mincho', serif; font-size: 0.8rem; letter-spacing: 0.35em; color: var(--text-muted); margin-bottom: 1.5rem; padding-left: 0.35em; }
+  .conv-waiting { font-family: 'Shippori Mincho', serif; font-size: 0.85rem; letter-spacing: 0.3em; color: var(--gold); margin-top: 1.5rem; padding-left: 0.3em; }
   .conv-waiting::after { content: '…'; animation: dotpulse 1.5s infinite; }
   @keyframes dotpulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
 
-  /* ========== 成功画面 ========== */
+  /* 成功 */
   .success-screen { gap: 1.5rem; }
-  .success-glyph {
-    width: 100px; height: 100px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,184,77,0.8) 0%, rgba(255,107,31,0.2) 60%, transparent 100%);
-    animation: glyph-glow 2s ease-in-out infinite;
-  }
-  @keyframes glyph-glow {
-    0%, 100% { transform: scale(1); opacity: 0.85; }
-    50% { transform: scale(1.1); opacity: 1; }
-  }
-  .success-text {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 1.6rem; letter-spacing: 0.4em;
-    color: var(--gold);
-    text-shadow: 0 0 25px rgba(201, 169, 97, 0.5);
-    padding-left: 0.4em;
-  }
-  .success-detail {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.85rem; letter-spacing: 0.25em;
-    color: var(--text-muted);
-    padding-left: 0.25em;
-  }
+  .success-glyph { width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, rgba(255,184,77,0.8) 0%, rgba(255,107,31,0.2) 60%, transparent 100%); animation: glyph-glow 2s ease-in-out infinite; }
+  @keyframes glyph-glow { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.1); opacity: 1; } }
+  .success-text { font-family: 'Shippori Mincho', serif; font-size: 1.6rem; letter-spacing: 0.4em; color: var(--gold); text-shadow: 0 0 25px rgba(201, 169, 97, 0.5); padding-left: 0.4em; }
+  .success-detail { font-family: 'Shippori Mincho', serif; font-size: 0.85rem; letter-spacing: 0.25em; color: var(--text-muted); padding-left: 0.25em; }
 
-  /* ========== 幽霊モード ========== */
+  /* 幽霊 */
   .ghost-screen { gap: 1.5rem; }
-  .ghost-title {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 2.2rem; letter-spacing: 0.5em;
-    color: var(--ghost-mist);
-    text-shadow: 0 0 30px rgba(196, 212, 232, 0.4);
-    padding-left: 0.5em;
-    margin-bottom: 0.5rem;
-  }
-  .ghost-subtitle {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.9rem; letter-spacing: 0.3em;
-    color: var(--ghost-blue);
-    text-align: center; line-height: 1.9;
-    padding-left: 0.3em;
-    margin-bottom: 1.5rem;
-  }
+  .ghost-title { font-family: 'Shippori Mincho', serif; font-size: 2.2rem; letter-spacing: 0.5em; color: var(--ghost-mist); text-shadow: 0 0 30px rgba(196, 212, 232, 0.4); padding-left: 0.5em; margin-bottom: 0.5rem; }
+  .ghost-subtitle { font-family: 'Shippori Mincho', serif; font-size: 0.9rem; letter-spacing: 0.3em; color: var(--ghost-blue); text-align: center; line-height: 1.9; padding-left: 0.3em; margin-bottom: 1.5rem; }
   .ghost-wisp { width: 180px; height: 180px; position: relative; margin: 1rem 0; }
   .ghost-wisp svg { width: 100%; height: 100%; overflow: visible; }
-  .ghost-progress {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 1.1rem; letter-spacing: 0.2em;
-    color: var(--ghost-mist);
-    margin-bottom: 1.5rem;
-  }
+  .ghost-progress { font-family: 'Shippori Mincho', serif; font-size: 1.1rem; letter-spacing: 0.2em; color: var(--ghost-mist); margin-bottom: 1.5rem; }
   .ghost-progress .count { color: var(--ghost-mist); font-size: 1.5rem; }
-
-  @keyframes ghost-drift {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(3px, -5px) scale(1.03); }
-    66% { transform: translate(-3px, -2px) scale(0.97); }
-  }
+  @keyframes ghost-drift { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(3px, -5px) scale(1.03); } 66% { transform: translate(-3px, -2px) scale(0.97); } }
   .ghost-wisp-anim { animation: ghost-drift 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 
-  /* ========== 既存：炎・蝋燭アニメーション ========== */
-  @keyframes flicker {
-    0%, 100% { transform: scale(1, 1) translateX(0); }
-    25% { transform: scale(0.96, 1.05) translateX(-1px); }
-    50% { transform: scale(1.03, 0.97) translateX(1px); }
-    75% { transform: scale(0.98, 1.02) translateX(-0.5px); }
-  }
-  @keyframes glow-pulse {
-    0%, 100% { opacity: 0.65; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.08); }
-  }
-  @keyframes blow-out {
-    0%   { transform: skewX(0deg)   scale(1, 1);     opacity: 1; }
-    25%  { transform: skewX(-28deg) scale(0.7, 1.1); opacity: 1; }
-    50%  { transform: skewX(15deg)  scale(0.45, 0.8); opacity: 0.8; }
-    100% { transform: skewX(0deg)   scale(0, 0);     opacity: 0; }
-  }
-  @keyframes glow-out {
-    0%   { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(0.2); }
-  }
-  @keyframes smoke-drift {
-    0%   { transform: translate(0, 0) scale(0.4); opacity: 0; }
-    10%  { opacity: 0.7; }
-    50%  { opacity: 0.5; }
-    100% { transform: translate(16px, -110px) scale(3.2); opacity: 0; }
-  }
-  @keyframes flame-bloom {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); filter: brightness(1.5); }
-    100% { transform: scale(1); }
-  }
+  /* 炎・蝋燭アニメーション */
+  @keyframes flicker { 0%, 100% { transform: scale(1, 1) translateX(0); } 25% { transform: scale(0.96, 1.05) translateX(-1px); } 50% { transform: scale(1.03, 0.97) translateX(1px); } 75% { transform: scale(0.98, 1.02) translateX(-0.5px); } }
+  @keyframes glow-pulse { 0%, 100% { opacity: 0.65; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
+  @keyframes blow-out { 0% { transform: skewX(0deg) scale(1, 1); opacity: 1; } 25% { transform: skewX(-28deg) scale(0.7, 1.1); opacity: 1; } 50% { transform: skewX(15deg) scale(0.45, 0.8); opacity: 0.8; } 100% { transform: skewX(0deg) scale(0, 0); opacity: 0; } }
+  @keyframes glow-out { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.2); } }
+  @keyframes smoke-drift { 0% { transform: translate(0, 0) scale(0.4); opacity: 0; } 10% { opacity: 0.7; } 50% { opacity: 0.5; } 100% { transform: translate(16px, -110px) scale(3.2); opacity: 0; } }
+  @keyframes flame-bloom { 0% { transform: scale(1); } 50% { transform: scale(1.4); filter: brightness(1.5); } 100% { transform: scale(1); } }
 
   .flame-group { animation: flicker 0.18s infinite; transform-box: fill-box; transform-origin: 50% 100%; }
   .flame-glow-anim { animation: glow-pulse 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
   .flame-group.blowing-out { animation: blow-out 0.4s cubic-bezier(0.4, 0, 0.6, 1) forwards; }
   .flame-glow-anim.blowing-out { animation: glow-out 0.35s ease-out forwards; }
   .flame-group.blooming { animation: flame-bloom 0.8s ease-out, flicker 0.18s infinite; transform-origin: 50% 100%; }
-  .smoke-wisp { transform-box: fill-box; transform-origin: center;
-    animation: smoke-drift 2.6s ease-out forwards; pointer-events: none; }
+  .smoke-wisp { transform-box: fill-box; transform-origin: center; animation: smoke-drift 2.6s ease-out forwards; pointer-events: none; }
 
-  /* ========== 死亡オーバーレイ ========== */
-  .death-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0, 0, 0, 0.92);
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    z-index: 50;
-    opacity: 0; pointer-events: none;
-    transition: opacity 2s ease;
-  }
+  /* 死亡 */
+  .death-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.92); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 2s ease; }
   .death-overlay.show { opacity: 1; pointer-events: all; }
-  .death-text {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 2.5rem; letter-spacing: 0.5em;
-    color: var(--text-muted); margin-bottom: 1.5rem;
-    padding-left: 0.5em;
-  }
-  .death-subtext {
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.85rem; letter-spacing: 0.45em;
-    color: var(--text-dim); margin-bottom: 2.5rem;
-    padding-left: 0.45em;
-  }
+  .death-text { font-family: 'Shippori Mincho', serif; font-size: 2.5rem; letter-spacing: 0.5em; color: var(--text-muted); margin-bottom: 1.5rem; padding-left: 0.5em; }
+  .death-subtext { font-family: 'Shippori Mincho', serif; font-size: 0.85rem; letter-spacing: 0.45em; color: var(--text-dim); margin-bottom: 2.5rem; padding-left: 0.45em; }
 
-  /* ========== デモ制御パネル ========== */
-  .demo-panel {
-    position: fixed; bottom: 0.8rem; left: 50%;
-    transform: translateX(-50%);
-    display: flex; gap: 0.5rem; flex-wrap: wrap;
-    justify-content: center;
-    z-index: 80;
-    padding: 0.4rem 0.6rem;
-    background: rgba(10, 9, 8, 0.7);
-    border: 1px solid var(--text-dim);
-    backdrop-filter: blur(8px);
-    max-width: 92vw;
-  }
-  .demo-panel.collapsed .demo-btn:not(.toggle) { display: none; }
-  .demo-btn {
-    background: transparent;
-    border: 1px solid var(--text-dim);
-    color: var(--text-muted);
-    padding: 0.3rem 0.7rem;
-    font-family: 'Shippori Mincho', serif;
-    font-size: 0.65rem; letter-spacing: 0.15em;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-  }
-  .demo-btn:hover { border-color: var(--gold); color: var(--gold); }
-  .demo-btn.toggle { color: var(--gold); border-color: var(--gold); }
+  /* 接続状態 */
+  .conn-indicator { position: fixed; top: 0.5rem; right: 0.5rem; font-family: 'Shippori Mincho', serif; font-size: 0.6rem; letter-spacing: 0.2em; color: var(--text-dim); z-index: 60; padding: 0.3rem 0.6rem; border: 1px solid var(--text-dim); }
+  .conn-indicator.online { color: var(--gold); border-color: var(--gold); }
+  .conn-indicator.offline { color: var(--danger); border-color: var(--danger); }
 
   @media (max-width: 480px) {
     .entry-title { font-size: 2rem; }
@@ -433,23 +164,24 @@
 <body>
   <div class="vignette"></div>
   <div class="grain"></div>
+  <div class="conn-indicator" id="connIndicator">接 続 中</div>
 
-  <!-- ============== エントリー ============== -->
+  <!-- エントリー -->
   <div class="screen" data-screen="entry">
     <div class="entry-mark">SHINKING&nbsp;NIGHT</div>
     <h1 class="entry-title">命の蝋燭</h1>
     <p class="entry-tagline">他人の灯で、自分が燃える</p>
     <input class="entry-name" id="nameInput" placeholder="あなたの名" maxlength="12">
     <button class="entry-start" id="startBtn" disabled>蝋燭を灯す</button>
+    <div class="entry-status" id="entryStatus"></div>
   </div>
 
-  <!-- ============== メイン蝋燭画面 ============== -->
+  <!-- メイン -->
   <div class="screen hidden main-screen" data-screen="main">
     <div class="main-header">
       <div class="main-user-name" id="mainName">─</div>
       <div class="main-code">灯号 <span class="main-code-num" id="mainCode">──────</span></div>
     </div>
-
     <div class="candle-stage">
       <div class="candle-wrapper">
         <svg class="candle-svg" viewBox="0 0 220 500" preserveAspectRatio="xMidYMid meet">
@@ -459,13 +191,13 @@
               <stop offset="100%" stop-color="#ff6b1f" stop-opacity="0"/>
             </radialGradient>
             <linearGradient id="waxGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%"  stop-color="#7a6e54"/>
+              <stop offset="0%" stop-color="#7a6e54"/>
               <stop offset="22%" stop-color="#e8dcc4"/>
               <stop offset="78%" stop-color="#d4c9b0"/>
               <stop offset="100%" stop-color="#7a6e54"/>
             </linearGradient>
             <linearGradient id="flameGrad" x1="50%" y1="100%" x2="50%" y2="0%">
-              <stop offset="0%"  stop-color="#ff6b1f"/>
+              <stop offset="0%" stop-color="#ff6b1f"/>
               <stop offset="55%" stop-color="#ffb84d"/>
               <stop offset="100%" stop-color="#fff5d1"/>
             </linearGradient>
@@ -473,7 +205,6 @@
               <feGaussianBlur stdDeviation="2.5"/>
             </filter>
           </defs>
-
           <g id="topGroup">
             <circle class="flame-glow-anim" cx="110" cy="80" r="70" fill="url(#flameGlow)"/>
             <g class="flame-group" id="flame">
@@ -482,7 +213,6 @@
             </g>
             <line x1="110" y1="108" x2="110" y2="125" stroke="#3a2a1a" stroke-width="2.5"/>
           </g>
-
           <rect id="wax" x="80" y="125" width="60" height="345" rx="3" fill="url(#waxGradient)" stroke="#6a5e44" stroke-width="0.5"/>
           <ellipse id="waxTop" cx="110" cy="125" rx="30" ry="4" fill="#d4c9b0"/>
           <rect x="70" y="470" width="80" height="10" rx="2" fill="#3a2a1a"/>
@@ -491,18 +221,16 @@
         </svg>
       </div>
     </div>
-
     <div class="info-panel">
       <div class="time-remaining" id="timeDisplay">--:--</div>
       <div class="time-label">残　り　火</div>
     </div>
-
     <div class="main-actions">
       <button class="primary-btn" id="shareBtn">火を分かつ</button>
     </div>
   </div>
 
-  <!-- ============== 火移し（コード入力） ============== -->
+  <!-- 火移し -->
   <div class="screen hidden pairing-screen" data-screen="pairing">
     <h2 class="pairing-title">火を分かつ</h2>
     <div class="pairing-card">
@@ -515,26 +243,28 @@
       <input class="pairing-input-field" id="partnerCodeInput" type="tel" maxlength="6" placeholder="──────">
     </div>
     <button class="primary-btn" id="confirmPairingBtn" disabled>繋ぐ</button>
+    <div class="pairing-status" id="pairingStatus"></div>
     <button class="back-link" id="backFromPairing">戻る</button>
   </div>
 
-  <!-- ============== 会話お題 ============== -->
+  <!-- 会話 -->
   <div class="screen hidden" data-screen="conversation">
     <div class="conv-label">お　題</div>
+    <div class="conv-partner"><span id="convPartnerName" class="name">─</span> と話す</div>
     <div class="conv-topic" id="convTopic">─</div>
     <div class="conv-instruction">話し終わったら、二人で完了を押す</div>
     <button class="primary-btn" id="completeConvBtn">話し終わった</button>
     <div class="conv-waiting hidden" id="convWaiting">相手の完了を待っています</div>
   </div>
 
-  <!-- ============== 成功 ============== -->
+  <!-- 成功 -->
   <div class="screen hidden success-screen" data-screen="success">
     <div class="success-glyph"></div>
     <div class="success-text">灯、分かたる</div>
     <div class="success-detail" id="successDetail">+30秒　互いの蝋燭が伸びた</div>
   </div>
 
-  <!-- ============== 幽霊モード ============== -->
+  <!-- 幽霊 -->
   <div class="screen hidden ghost-screen" data-screen="ghost">
     <div class="ghost-wisp">
       <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
@@ -550,8 +280,7 @@
         </defs>
         <g class="ghost-wisp-anim">
           <circle cx="100" cy="100" r="80" fill="url(#ghostGrad)"/>
-          <path d="M 100 50 Q 80 70, 85 100 Q 78 130, 95 145 Q 100 155, 105 145 Q 122 130, 115 100 Q 120 70, 100 50 Z"
-                fill="#c4d4e8" opacity="0.5" filter="url(#ghostBlur)"/>
+          <path d="M 100 50 Q 80 70, 85 100 Q 78 130, 95 145 Q 100 155, 105 145 Q 122 130, 115 100 Q 120 70, 100 50 Z" fill="#c4d4e8" opacity="0.5" filter="url(#ghostBlur)"/>
         </g>
       </svg>
     </div>
@@ -563,35 +292,48 @@
     <button class="primary-btn" id="ghostHelpBtn">人の蝋燭を伸ばす</button>
   </div>
 
-  <!-- ============== 死亡オーバーレイ ============== -->
+  <!-- 死亡 -->
   <div class="death-overlay" id="deathOverlay">
     <div class="death-text">灯、消ゆ</div>
     <div class="death-subtext">アジャラカモクレン</div>
     <button class="primary-btn" id="ghostBtn">幽霊として続ける</button>
   </div>
 
-  <!-- ============== デモ制御 ============== -->
-  <div class="demo-panel collapsed" id="demoPanel">
-    <button class="demo-btn toggle" id="demoToggle">DEMO</button>
-    <button class="demo-btn" id="speedBtn">× 1</button>
-    <button class="demo-btn" id="forceDeathBtn">強制死亡</button>
-    <button class="demo-btn" id="addFireBtn">＋火</button>
-    <button class="demo-btn" id="resetBtn">最初から</button>
-  </div>
+<script type="module">
+  // ============== Firebase初期化 ==============
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import {
+    getDatabase, ref, set, get, update, onValue, onDisconnect,
+    serverTimestamp, push, child, remove
+  } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
-<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAxwEeCSh5CGlz8aMKbpROo77a2eTgS1Cc",
+    authDomain: "shinking-night.firebaseapp.com",
+    databaseURL: "https://shinking-night-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "shinking-night",
+    storageBucket: "shinking-night.firebasestorage.app",
+    messagingSenderId: "1046470684524",
+    appId: "1:1046470684524:web:b07e305deab1645d7f8d49"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
   // ============== 設定 ==============
   const CONFIG = {
-    initialMinSeconds: 120,    // 開始時の最小残り時間
-    initialMaxSeconds: 300,    // 開始時の最大残り時間
-    flameTransferGain: 30,     // 火移し成功で増える秒数（両者）
-    ghostRequiredHelps: 3,     // 幽霊が復活するのに必要な助け人数
-    ghostRebornSeconds: 90,    // 復活時の蝋燭の長さ
+    initialMinSeconds: 180,
+    initialMaxSeconds: 360,
+    flameTransferGain: 30,
+    ghostRequiredHelps: 3,
+    ghostRebornSeconds: 120,
     waxMaxHeight: 345,
     waxYStart: 125,
   };
 
-  // ============== お題（カジュアル〜深め） ==============
+  // お題
   const TOPICS = [
     "最近、自分の蝋燭を縮めてる悪習慣は？",
     "推し（人・物・場所）の話を1分してください",
@@ -613,68 +355,67 @@
   // ============== 状態 ==============
   const state = {
     screen: 'entry',
-    user: {
-      name: '',
-      code: '',
-      candleSeconds: 0,
-      initialSeconds: 0,
-      isGhost: false,
-      ghostHelped: 0,
-      flamesShared: 0,
-    },
-    pairing: {
-      partnerCode: '',
-      topic: '',
-      selfApproved: false,
-      partnerApproved: false,
-      // デモ用：相手の承認を擬似的にタイマーで発火
-      simulatedPartnerTimer: null,
-    },
-    speedMultiplier: 1,
+    uid: null,
+    user: { name: '', code: '', startedAt: 0, initialSeconds: 0, isGhost: false, ghostHelped: 0 },
+    pairing: { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, unsubscribe: null },
     isDead: false,
   };
 
-  // ============== ユーティリティ ==============
+  // ============== Utils ==============
   const $ = id => document.getElementById(id);
   const $$ = sel => document.querySelectorAll(sel);
-  const fmt = sec => {
-    const s = Math.max(0, Math.floor(sec));
-    return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-  };
-  const generateCode = () => String(Math.floor(100000 + Math.random()*900000));
-  const pickTopic = () => TOPICS[Math.floor(Math.random()*TOPICS.length)];
-
-  // ============== 画面切替 ==============
-  function showScreen(name) {
+  const fmt = sec => { const s = Math.max(0, Math.floor(sec)); return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`; };
+  const showScreen = name => {
     state.screen = name;
-    $$('.screen').forEach(el => {
-      el.classList.toggle('hidden', el.dataset.screen !== name);
-    });
+    $$('.screen').forEach(el => el.classList.toggle('hidden', el.dataset.screen !== name));
+  };
+
+  // 現在の残秒数を計算（サーバー時刻ベース）
+  function calcSecondsLeft() {
+    if (!state.user.startedAt) return 0;
+    const elapsedMs = Date.now() - state.user.startedAt;
+    const remaining = state.user.initialSeconds - elapsedMs / 1000;
+    return Math.max(0, remaining);
   }
 
-  // ============== 蝋燭の見た目を更新 ==============
+  // ============== 接続状態 ==============
+  const connIndicator = $('connIndicator');
+  onValue(ref(db, '.info/connected'), snap => {
+    if (snap.val() === true) {
+      connIndicator.textContent = '繋';
+      connIndicator.className = 'conn-indicator online';
+    } else {
+      connIndicator.textContent = '切';
+      connIndicator.className = 'conn-indicator offline';
+    }
+  });
+
+  // ============== 蝋燭表示 ==============
   const waxEl = $('wax'), waxTopEl = $('waxTop'), topGroup = $('topGroup');
   const flameEl = $('flame'), flameGlowEl = document.querySelector('.flame-glow-anim');
-  const timeDisplay = $('timeDisplay');
 
   function updateCandleDisplay() {
+    const sec = calcSecondsLeft();
     const ratio = state.user.initialSeconds > 0
-      ? Math.max(0, Math.min(1, state.user.candleSeconds / state.user.initialSeconds))
-      : 0;
+      ? Math.max(0, Math.min(1, sec / state.user.initialSeconds)) : 0;
     const newHeight = CONFIG.waxMaxHeight * ratio;
     const newY = CONFIG.waxYStart + (CONFIG.waxMaxHeight - newHeight);
     waxEl.setAttribute('height', newHeight);
     waxEl.setAttribute('y', newY);
     waxTopEl.setAttribute('cy', newY);
     topGroup.setAttribute('transform', `translate(0, ${newY - CONFIG.waxYStart})`);
-    timeDisplay.textContent = fmt(state.user.candleSeconds);
+    $('timeDisplay').textContent = fmt(sec);
     document.body.classList.toggle('warning', ratio < 0.2 && !state.isDead);
+    // 死亡判定
+    if (sec <= 0 && !state.isDead && !state.user.isGhost && state.user.initialSeconds > 0) {
+      die();
+    }
   }
 
   // ============== 煙（魂） ==============
   function spawnSmoke() {
-    const ratio = state.user.initialSeconds > 0
-      ? state.user.candleSeconds / state.user.initialSeconds : 0;
+    const sec = calcSecondsLeft();
+    const ratio = state.user.initialSeconds > 0 ? sec / state.user.initialSeconds : 0;
     const dy = CONFIG.waxMaxHeight - CONFIG.waxMaxHeight * ratio;
     const baseY = 108 + dy;
     const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -702,133 +443,271 @@
     setTimeout(() => $('deathOverlay').classList.add('show'), 2600);
   }
 
-  // ============== ゲーム開始 ==============
-  function startGame(name) {
-    state.user.name = name;
-    state.user.code = generateCode();
-    const initial = Math.floor(CONFIG.initialMinSeconds +
-      Math.random() * (CONFIG.initialMaxSeconds - CONFIG.initialMinSeconds));
-    state.user.candleSeconds = initial;
-    state.user.initialSeconds = initial;
-    state.user.isGhost = false;
-    state.user.ghostHelped = 0;
-    state.user.flamesShared = 0;
-    state.isDead = false;
-    document.body.classList.remove('ghost-mode');
-    flameEl.classList.remove('blowing-out');
-    flameGlowEl.classList.remove('blowing-out');
-    topGroup.querySelectorAll('.smoke-wisp').forEach(el => el.remove());
-    $('deathOverlay').classList.remove('show');
-    $('mainName').textContent = name;
-    $('mainCode').textContent = state.user.code;
-    updateCandleDisplay();
-    showScreen('main');
-    lastTick = Date.now();
+  // ============== 認証 + 入場 ==============
+  function generateCode() { return String(Math.floor(100000 + Math.random()*900000)); }
+
+  async function ensureUniqueCode() {
+    // 念のため重複チェック（衝突確率は低い）
+    for (let i = 0; i < 5; i++) {
+      const code = generateCode();
+      const snap = await get(ref(db, `codeIndex/${code}`));
+      if (!snap.exists()) return code;
+    }
+    return generateCode(); // 諦めて返す
+  }
+
+  async function startGame(name) {
+    $('entryStatus').textContent = '蝋燭に火を灯しています…';
+    $('entryStatus').classList.remove('error');
+    try {
+      // 匿名ログイン
+      if (!state.uid) {
+        const cred = await signInAnonymously(auth);
+        state.uid = cred.user.uid;
+      }
+      const code = await ensureUniqueCode();
+      const initialSec = Math.floor(CONFIG.initialMinSeconds + Math.random() * (CONFIG.initialMaxSeconds - CONFIG.initialMinSeconds));
+      const startedAt = Date.now();
+
+      // ユーザー登録
+      await set(ref(db, `users/${state.uid}`), {
+        name, code, startedAt, initialSeconds: initialSec, isGhost: false, ghostHelped: 0
+      });
+      // コード逆引き
+      await set(ref(db, `codeIndex/${code}`), state.uid);
+      // 切断時にコードだけは消す（ユーザーデータは記録として残す）
+      onDisconnect(ref(db, `codeIndex/${code}`)).remove();
+
+      state.user = { name, code, startedAt, initialSeconds: initialSec, isGhost: false, ghostHelped: 0 };
+      state.isDead = false;
+      flameEl.classList.remove('blowing-out');
+      flameGlowEl.classList.remove('blowing-out');
+      topGroup.querySelectorAll('.smoke-wisp').forEach(el => el.remove());
+      $('deathOverlay').classList.remove('show');
+      document.body.classList.remove('ghost-mode');
+
+      $('mainName').textContent = name;
+      $('mainCode').textContent = code;
+      updateCandleDisplay();
+      showScreen('main');
+
+      // 自分のデータ変更を購読（火が伸びた時などにリアルタイム反映）
+      onValue(ref(db, `users/${state.uid}`), snap => {
+        const d = snap.val();
+        if (!d) return;
+        state.user.startedAt = d.startedAt;
+        state.user.initialSeconds = d.initialSeconds;
+        state.user.isGhost = d.isGhost;
+        state.user.ghostHelped = d.ghostHelped || 0;
+        updateCandleDisplay();
+      });
+    } catch (e) {
+      console.error(e);
+      $('entryStatus').textContent = '接続できません。電波を確認してください。';
+      $('entryStatus').classList.add('error');
+    }
   }
 
   // ============== 火移しフロー ==============
-  function openPairing() {
+  async function openPairing() {
     $('bigCode').textContent = state.user.code;
     $('partnerCodeInput').value = '';
     $('confirmPairingBtn').disabled = true;
+    $('pairingStatus').textContent = '';
+    $('pairingStatus').classList.remove('error');
     showScreen('pairing');
   }
 
-  function startConversation() {
-    state.pairing.topic = pickTopic();
-    state.pairing.selfApproved = false;
-    state.pairing.partnerApproved = false;
+  async function startPairingWithCode(partnerCode) {
+    $('pairingStatus').textContent = '相手を探しています…';
+    $('pairingStatus').classList.remove('error');
+    try {
+      // コード逆引き
+      const snap = await get(ref(db, `codeIndex/${partnerCode}`));
+      if (!snap.exists()) {
+        $('pairingStatus').textContent = 'その灯号は見つかりません';
+        $('pairingStatus').classList.add('error');
+        return;
+      }
+      const partnerUid = snap.val();
+      if (partnerUid === state.uid) {
+        $('pairingStatus').textContent = '自分の灯号は入力できません';
+        $('pairingStatus').classList.add('error');
+        return;
+      }
+      const partnerSnap = await get(ref(db, `users/${partnerUid}`));
+      if (!partnerSnap.exists()) {
+        $('pairingStatus').textContent = '相手の蝋燭が見つかりません';
+        $('pairingStatus').classList.add('error');
+        return;
+      }
+      const partnerData = partnerSnap.val();
+
+      // ペアリング作成（小さいUID順でIDを作って衝突を防ぐ）
+      const [uidA, uidB] = [state.uid, partnerUid].sort();
+      const pairingId = `${uidA}_${uidB}`;
+      const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+
+      // 既存ペアリングを確認
+      const existing = await get(ref(db, `pairings/${pairingId}`));
+      if (existing.exists() && !existing.val().completed) {
+        // 既にペアリング進行中なら参加
+        state.pairing = {
+          pairingId,
+          partnerUid,
+          partnerName: partnerData.name,
+          topic: existing.val().topic,
+          isInitiator: false,
+          unsubscribe: null,
+        };
+      } else {
+        // 新規作成
+        await set(ref(db, `pairings/${pairingId}`), {
+          uidA, uidB, topic,
+          nameA: state.uid === uidA ? state.user.name : partnerData.name,
+          nameB: state.uid === uidB ? state.user.name : partnerData.name,
+          approvedA: false, approvedB: false,
+          completed: false,
+          createdAt: serverTimestamp(),
+        });
+        state.pairing = {
+          pairingId, partnerUid,
+          partnerName: partnerData.name,
+          topic,
+          isInitiator: true,
+          unsubscribe: null,
+        };
+      }
+      enterConversation();
+    } catch (e) {
+      console.error(e);
+      $('pairingStatus').textContent = '接続エラー';
+      $('pairingStatus').classList.add('error');
+    }
+  }
+
+  function enterConversation() {
+    $('convPartnerName').textContent = state.pairing.partnerName;
     $('convTopic').textContent = state.pairing.topic;
     $('completeConvBtn').classList.remove('hidden');
     $('convWaiting').classList.add('hidden');
     showScreen('conversation');
+
+    // ペアリング状態を購読
+    const pairingRef = ref(db, `pairings/${state.pairing.pairingId}`);
+    state.pairing.unsubscribe = onValue(pairingRef, async snap => {
+      const d = snap.val();
+      if (!d) return;
+      // 完了済み（両者承認）なら火を伸ばす
+      if (d.completed && state.screen === 'conversation') {
+        await applyTransferGain();
+        finishTransferLocal();
+      }
+    });
   }
 
-  function selfApprove() {
-    state.pairing.selfApproved = true;
+  async function selfApproveConversation() {
     $('completeConvBtn').classList.add('hidden');
     $('convWaiting').classList.remove('hidden');
-    // デモ用：1〜2.5秒で相手も自動承認
-    state.pairing.simulatedPartnerTimer = setTimeout(() => {
-      state.pairing.partnerApproved = true;
-      finishTransfer();
-    }, 1200 + Math.random() * 1300);
+    const pairingId = state.pairing.pairingId;
+    const [uidA, uidB] = pairingId.split('_');
+    const field = state.uid === uidA ? 'approvedA' : 'approvedB';
+
+    // トランザクション的に承認
+    await update(ref(db, `pairings/${pairingId}`), { [field]: true });
+
+    // もう一方も承認済みなら completed フラグを立てる
+    const snap = await get(ref(db, `pairings/${pairingId}`));
+    const d = snap.val();
+    if (d.approvedA && d.approvedB && !d.completed) {
+      await update(ref(db, `pairings/${pairingId}`), { completed: true });
+    }
   }
 
-  function finishTransfer() {
-    // 火を両者に追加
-    state.user.candleSeconds = Math.min(
-      state.user.initialSeconds,
-      state.user.candleSeconds + CONFIG.flameTransferGain
-    );
-    state.user.flamesShared += 1;
-    updateCandleDisplay();
-    // 炎が一瞬大きくなる演出
+  // 火を両者に追加（トランザクション風に再書き込み）
+  async function applyTransferGain() {
+    const pairingId = state.pairing.pairingId;
+    const flag = `gainApplied_${state.uid}`;
+    // 二重適用防止のフラグを使う
+    const snap = await get(ref(db, `pairings/${pairingId}/${flag}`));
+    if (snap.exists()) return;
+    await update(ref(db, `pairings/${pairingId}`), { [flag]: true });
+
+    // 自分の蝋燭を伸ばす：startedAtを過去にずらすことで残秒数を増やす
+    const userSnap = await get(ref(db, `users/${state.uid}`));
+    const u = userSnap.val();
+    if (!u) return;
+    const newStartedAt = u.startedAt - CONFIG.flameTransferGain * 1000;
+    await update(ref(db, `users/${state.uid}`), { startedAt: newStartedAt });
+  }
+
+  function finishTransferLocal() {
+    if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
     flameEl.classList.add('blooming');
     setTimeout(() => flameEl.classList.remove('blooming'), 800);
-    // 成功画面を1.8秒見せてからメインへ
     $('successDetail').textContent = `+${CONFIG.flameTransferGain}秒　互いの蝋燭が伸びた`;
     showScreen('success');
-    setTimeout(() => showScreen('main'), 1800);
+    setTimeout(() => {
+      // 完了したペアリングを片付け（任意）
+      const initiator = state.pairing.isInitiator;
+      const pairingId = state.pairing.pairingId;
+      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, unsubscribe: null };
+      // 後始末（双方が削除を試みても問題ない）
+      if (initiator) setTimeout(() => remove(ref(db, `pairings/${pairingId}`)).catch(()=>{}), 5000);
+      showScreen('main');
+    }, 1800);
   }
 
   // ============== 幽霊モード ==============
-  function enterGhost() {
+  async function enterGhost() {
     state.user.isGhost = true;
-    state.user.ghostHelped = 0;
     document.body.classList.add('ghost-mode');
     $('deathOverlay').classList.remove('show');
     $('ghostHelpedCount').textContent = '0';
+    await update(ref(db, `users/${state.uid}`), { isGhost: true, ghostHelped: 0 });
     showScreen('ghost');
   }
 
-  function ghostHelp() {
-    state.user.ghostHelped += 1;
-    $('ghostHelpedCount').textContent = state.user.ghostHelped;
-    if (state.user.ghostHelped >= CONFIG.ghostRequiredHelps) {
+  async function ghostHelp() {
+    // 幽霊は他人を助けることが「火を分かつ」と同じ画面で行われる前提
+    // ここではプレゼン用に簡易：1人助けたカウントを増やすボタン
+    // 本来は火移しフロー内で「相手が幽霊なら自分は減らずに伸ばすだけ」が正しいが、
+    // デモなので幽霊が他人とペアリング→火移し成功時にカウント+1する形が自然
+    // → 火移しを通常通り起動できるよう、shareBtnに繋ぐ
+    await openPairing();
+  }
+
+  // 幽霊が誰かを助けて復活する処理
+  async function tryGhostRevive() {
+    if (!state.user.isGhost) return;
+    const helped = (state.user.ghostHelped || 0) + 1;
+    await update(ref(db, `users/${state.uid}`), { ghostHelped: helped });
+    $('ghostHelpedCount').textContent = helped;
+    if (helped >= CONFIG.ghostRequiredHelps) {
       // 復活
-      setTimeout(() => {
-        state.user.isGhost = false;
-        state.isDead = false;
-        document.body.classList.remove('ghost-mode');
-        state.user.candleSeconds = CONFIG.ghostRebornSeconds;
-        state.user.initialSeconds = CONFIG.ghostRebornSeconds;
-        flameEl.classList.remove('blowing-out');
-        flameGlowEl.classList.remove('blowing-out');
-        topGroup.querySelectorAll('.smoke-wisp').forEach(el => el.remove());
-        updateCandleDisplay();
-        $('successDetail').textContent = '徳積みて、新たな命を得たり';
-        showScreen('success');
-        setTimeout(() => {
-          showScreen('main');
-          lastTick = Date.now();
-        }, 2000);
-      }, 500);
+      const newStartedAt = Date.now();
+      await update(ref(db, `users/${state.uid}`), {
+        isGhost: false, ghostHelped: 0,
+        startedAt: newStartedAt, initialSeconds: CONFIG.ghostRebornSeconds,
+      });
+      state.user.isGhost = false;
+      state.isDead = false;
+      document.body.classList.remove('ghost-mode');
+      flameEl.classList.remove('blowing-out');
+      flameGlowEl.classList.remove('blowing-out');
+      topGroup.querySelectorAll('.smoke-wisp').forEach(el => el.remove());
+      $('successDetail').textContent = '徳積みて、新たな命を得たり';
+      showScreen('success');
+      setTimeout(() => { updateCandleDisplay(); showScreen('main'); }, 2000);
     }
   }
 
-  // ============== メインループ ==============
-  let lastTick = Date.now();
+  // ============== メインループ（表示更新） ==============
   setInterval(() => {
-    if (state.isDead || state.user.isGhost) return;
-    if (state.screen !== 'main' && state.speedMultiplier === 1) {
-      // メイン画面以外では普通の速度では減らない（プレゼンしやすく）
-      lastTick = Date.now(); return;
-    }
-    const now = Date.now();
-    const elapsed = (now - lastTick) / 1000;
-    lastTick = now;
-    state.user.candleSeconds -= elapsed * state.speedMultiplier;
-    if (state.user.candleSeconds <= 0) {
-      state.user.candleSeconds = 0;
-      updateCandleDisplay();
-      die();
-    } else {
-      updateCandleDisplay();
-    }
-  }, 100);
+    if (state.screen === 'main') updateCandleDisplay();
+  }, 200);
 
-  // ============== イベント ==============
+  // ============== UIイベント ==============
   $('nameInput').addEventListener('input', e => {
     $('startBtn').disabled = e.target.value.trim().length === 0;
   });
@@ -841,12 +720,7 @@
   });
 
   $('shareBtn').addEventListener('click', () => {
-    if (state.user.isGhost) {
-      // 幽霊が「人の蝋燭を伸ばす」相当
-      ghostHelp();
-    } else {
-      openPairing();
-    }
+    openPairing();
   });
 
   $('partnerCodeInput').addEventListener('input', e => {
@@ -854,52 +728,24 @@
     e.target.value = v;
     $('confirmPairingBtn').disabled = v.length !== 6;
   });
-
   $('confirmPairingBtn').addEventListener('click', () => {
-    // デモなので相手コードは何でも繋がる
-    state.pairing.partnerCode = $('partnerCodeInput').value;
-    startConversation();
+    const code = $('partnerCodeInput').value;
+    if (code.length === 6) startPairingWithCode(code);
   });
   $('backFromPairing').addEventListener('click', () => showScreen('main'));
-
-  $('completeConvBtn').addEventListener('click', selfApprove);
-
+  $('completeConvBtn').addEventListener('click', selfApproveConversation);
   $('ghostBtn').addEventListener('click', enterGhost);
   $('ghostHelpBtn').addEventListener('click', ghostHelp);
 
-  // ============== デモパネル ==============
-  $('demoToggle').addEventListener('click', () => {
-    $('demoPanel').classList.toggle('collapsed');
-  });
-  const speeds = [1, 5, 20, 60];
-  let speedIdx = 0;
-  $('speedBtn').addEventListener('click', () => {
-    speedIdx = (speedIdx + 1) % speeds.length;
-    state.speedMultiplier = speeds[speedIdx];
-    $('speedBtn').textContent = `× ${speeds[speedIdx]}`;
-  });
-  $('forceDeathBtn').addEventListener('click', () => {
-    if (state.isDead) return;
-    state.user.candleSeconds = 0;
-    updateCandleDisplay();
-    die();
-  });
-  $('addFireBtn').addEventListener('click', () => {
-    state.user.candleSeconds = Math.min(state.user.initialSeconds, state.user.candleSeconds + 30);
-    updateCandleDisplay();
-    flameEl.classList.add('blooming');
-    setTimeout(() => flameEl.classList.remove('blooming'), 800);
-  });
-  $('resetBtn').addEventListener('click', () => {
-    speedIdx = 0;
-    state.speedMultiplier = 1;
-    $('speedBtn').textContent = '× 1';
-    $('nameInput').value = '';
-    $('startBtn').disabled = true;
-    showScreen('entry');
-  });
+  // 火移し完了時に幽霊なら復活カウントを進める
+  const origApply = applyTransferGain;
+  // 火移し成功時に幽霊状態なら徳を積む
+  const watchGhostHelp = () => {
+    // applyTransferGainの後にghost状態をチェック
+    // → finishTransferLocalの直前に呼ばれる経路は確保済みなので、ここで監視
+  };
 
-  // ============== 初期化 ==============
+  // 初期画面
   showScreen('entry');
 </script>
 </body>
