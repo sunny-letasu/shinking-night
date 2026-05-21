@@ -365,7 +365,7 @@
     screen: 'entry',
     uid: null,
     user: { name: '', code: '', startedAt: 0, initialSeconds: 0, isGhost: false, ghostHelped: 0 },
-    pairing: { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, unsubscribe: null },
+    pairing: { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, unsubscribe: null, convStartedAt: 0 },
     isDead: false,
   };
 
@@ -379,9 +379,14 @@
   };
 
   // 現在の残秒数を計算（サーバー時刻ベース）
+  // 会話中は時間を止める（実時間ではなく会話開始時点の値を返す）
   function calcSecondsLeft() {
     if (!state.user.startedAt) return 0;
-    const elapsedMs = Date.now() - state.user.startedAt;
+    // 会話中なら、会話に入った瞬間の残秒数を返す（時間停止）
+    const effectiveNow = (state.screen === 'conversation' && state.pairing.convStartedAt > 0)
+      ? state.pairing.convStartedAt
+      : Date.now();
+    const elapsedMs = effectiveNow - state.user.startedAt;
     const remaining = state.user.initialSeconds - elapsedMs / 1000;
     return Math.max(0, remaining);
   }
@@ -599,6 +604,8 @@
     $('convTopic').textContent = state.pairing.topic;
     $('completeConvBtn').classList.remove('hidden');
     $('convWaiting').classList.add('hidden');
+    // 会話開始時刻を記録（後で startedAt を補正するため）
+    state.pairing.convStartedAt = Date.now();
     showScreen('conversation');
 
     // ペアリング状態を購読
@@ -632,7 +639,7 @@
     }
   }
 
-  // 火を両者に追加（トランザクション風に再書き込み）
+  // 火を両者に追加（会話中の経過時間ぶんも蝋燭を止める補正を入れる）
   async function applyTransferGain() {
     const pairingId = state.pairing.pairingId;
     const flag = `gainApplied_${state.uid}`;
@@ -641,11 +648,21 @@
     if (snap.exists()) return;
     await update(ref(db, `pairings/${pairingId}`), { [flag]: true });
 
-    // 自分の蝋燭を伸ばす：startedAtを過去にずらすことで残秒数を増やす
+    // 会話中に経過した時間（秒）
+    const convDurationSec = state.pairing.convStartedAt > 0
+      ? (Date.now() - state.pairing.convStartedAt) / 1000
+      : 0;
+
+    // 自分のユーザーデータを取得
     const userSnap = await get(ref(db, `users/${state.uid}`));
     const u = userSnap.val();
     if (!u) return;
-    const newStartedAt = u.startedAt - CONFIG.flameTransferGain * 1000;
+
+    // startedAtを「会話で経過した分」だけ未来にずらして時間停止を再現
+    // さらに、ご褒美の30秒ぶんさらに過去にずらして残り時間を増やす
+    // 結果：startedAt + (convDurationSec - flameTransferGain) * 1000
+    const adjustMs = (convDurationSec - CONFIG.flameTransferGain) * 1000;
+    const newStartedAt = u.startedAt + adjustMs;
     await update(ref(db, `users/${state.uid}`), { startedAt: newStartedAt });
   }
 
@@ -659,7 +676,7 @@
       // 完了したペアリングを片付け（任意）
       const initiator = state.pairing.isInitiator;
       const pairingId = state.pairing.pairingId;
-      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, unsubscribe: null };
+      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, unsubscribe: null, convStartedAt: 0 };
       // 後始末（双方が削除を試みても問題ない）
       if (initiator) setTimeout(() => remove(ref(db, `pairings/${pairingId}`)).catch(()=>{}), 5000);
       showScreen('main');
