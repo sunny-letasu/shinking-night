@@ -76,7 +76,7 @@
   .time-remaining { font-size: 2.6rem; font-weight: 900; letter-spacing: 0.05em; color: var(--candle-yellow); text-shadow: 0 0 25px rgba(255, 216, 77, 0.5); font-variant-numeric: tabular-nums; transition: color 0.5s, text-shadow 0.5s; }
   .time-label { font-size: 0.7rem; letter-spacing: 0.4em; color: var(--text-muted); margin-top: 0.3rem; padding-left: 0.4em; }
   body.warning .time-remaining { color: var(--danger); text-shadow: 0 0 25px rgba(255, 94, 108, 0.5); }
-  .main-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; justify-content: center; }
+  .main-actions { display: flex; flex-direction: column; gap: 0.8rem; align-items: center; }
 
   .primary-btn { background: var(--candle-yellow); border: none; color: #4a3818; padding: 0.9rem 2.2rem; font-family: inherit; font-size: 0.95rem; font-weight: 900; letter-spacing: 0.15em; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 0 var(--candle-deep), 0 6px 15px rgba(255, 154, 60, 0.25); transition: all 0.15s ease; }
   .primary-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--candle-deep), 0 10px 20px rgba(255, 154, 60, 0.35); }
@@ -150,19 +150,20 @@
   /* ===== ロールボタン（火をもらう／あげる） ===== */
   .role-btn {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0.2rem;
-    padding: 0.85rem 1.8rem;
-    min-width: 130px;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.95rem 2rem;
+    min-width: 220px;
   }
   .role-btn .role-icon {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     line-height: 1;
     font-weight: 900;
   }
   .role-btn .role-label {
-    font-size: 0.95rem;
+    font-size: 1rem;
     letter-spacing: 0.15em;
   }
 
@@ -330,6 +331,27 @@
     transition: all 0.2s;
   }
   .modal-cancel:hover { color: var(--text-soft); border-color: var(--text-soft); }
+  .modal-message {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--pop-cream);
+    text-align: center;
+    margin-bottom: 1.4rem;
+    font-weight: 500;
+  }
+  .modal-message strong {
+    color: var(--candle-yellow);
+    font-weight: 900;
+    font-size: 1.15em;
+  }
+  .modal-error {
+    font-size: 0.85rem;
+    color: var(--danger);
+    text-align: center;
+    margin: -0.5rem 0 1rem;
+    min-height: 1.2em;
+    font-weight: 700;
+  }
 
   @media (max-width: 480px) {
     .entry-title { font-size: 2.3rem; }
@@ -439,6 +461,7 @@
     <div class="conv-instruction">話し終わったら、ふたりとも完了をタップしてね</div>
     <button class="primary-btn" id="completeConvBtn">話し終わった！</button>
     <div class="conv-waiting hidden" id="convWaiting">相手の完了を待ってるよ</div>
+    <button class="back-link" id="cancelConvBtn">やめる</button>
   </div>
 
   <div class="screen hidden success-screen" data-screen="success">
@@ -490,9 +513,22 @@
     <div class="modal-card">
       <div class="modal-title">名前を変える</div>
       <input class="entry-name" id="editNameInput" placeholder="あたらしい名前" maxlength="12">
+      <div class="modal-error" id="editNameError"></div>
       <div class="modal-actions">
         <button class="modal-cancel" id="cancelEditName">やめる</button>
         <button class="primary-btn" id="saveNameBtn" disabled>変える</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- もらう側からの依頼ダイアログ（受け取った側に表示） -->
+  <div class="modal-overlay" id="receiveRequestModal">
+    <div class="modal-card">
+      <div class="modal-title">火をあげる？</div>
+      <p class="modal-message"><strong id="requesterName">─</strong> さんが<br>あなたから火をもらいたがってるよ</p>
+      <div class="modal-actions">
+        <button class="modal-cancel" id="declineRequestBtn">ことわる</button>
+        <button class="primary-btn" id="acceptRequestBtn">あげる！</button>
       </div>
     </div>
   </div>
@@ -527,7 +563,7 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  const CONFIG = { initialMinSeconds: 300, initialMaxSeconds: 480, flameTransferGain: 30, flameTransferGiverLoss: 15, ghostRequiredHelps: 3, ghostRebornSeconds: 120, waxMaxHeight: 345, waxYStart: 125 };
+  const CONFIG = { initialMinSeconds: 300, initialMaxSeconds: 480, flameTransferGain: 30, flameTransferGiverLoss: 15, ghostRequiredHelps: 3, ghostRebornSeconds: 120, cooldownMs: 30 * 60 * 1000, waxMaxHeight: 345, waxYStart: 125 };
 
   const TOPICS = [
     "何歳まで生きたい？",
@@ -658,11 +694,54 @@
         if (countEl) countEl.textContent = state.user.ghostHelped;
         updateCandleDisplay();
       });
+
+      // 自分宛の保留中ペアリング依頼を監視
+      startListeningForIncomingRequests();
     } catch (e) {
       console.error(e);
       $('entryStatus').textContent = 'つながらないみたい。電波をチェックしてみてね';
       $('entryStatus').classList.add('error');
     }
+  }
+
+  // 自分宛の「火をあげて」依頼を監視
+  let incomingRequestUnsubscribe = null;
+  function startListeningForIncomingRequests() {
+    if (incomingRequestUnsubscribe) incomingRequestUnsubscribe();
+    incomingRequestUnsubscribe = onValue(ref(db, 'pairings'), snap => {
+      if (!snap.exists()) return;
+      const all = snap.val();
+      // 自分が giver で status='pending' のペアリングを探す
+      Object.entries(all).forEach(([pairingId, d]) => {
+        if (d.status !== 'pending') return;
+        if (d.giverUid !== state.uid) return;
+        if (d.requesterUid === state.uid) return; // 自分が依頼を出した側はスキップ
+        // メイン画面にいる時だけモーダルを出す（会話中などには邪魔しない）
+        if (state.screen !== 'main') return;
+        // 既にモーダル表示中ならスキップ
+        if ($('receiveRequestModal').classList.contains('show')) return;
+        showReceiveRequestModal(pairingId, d);
+      });
+    });
+  }
+
+  function showReceiveRequestModal(pairingId, pairingData) {
+    state.pairing = {
+      pairingId,
+      partnerUid: pairingData.requesterUid,
+      partnerName: pairingData.uidA === pairingData.requesterUid ? pairingData.nameA : pairingData.nameB,
+      topic: pairingData.topic,
+      isInitiator: false,
+      giverUid: pairingData.giverUid,
+      receiverUid: pairingData.receiverUid,
+      ghostInitiated: pairingData.ghostInitiated || false,
+      mode: 'give', // 自分は giver
+      status: 'pending',
+      unsubscribe: null,
+      convStartedAt: 0,
+    };
+    $('requesterName').textContent = state.pairing.partnerName;
+    $('receiveRequestModal').classList.add('show');
   }
 
   async function openPairing(mode = 'give') {
@@ -743,34 +822,84 @@
       if (!partnerSnap.exists()) { $('pairingStatus').textContent = 'その人のろうそくが見つからないよ'; $('pairingStatus').classList.add('error'); return; }
       const partnerData = partnerSnap.val();
       if (partnerData.isGhost) { $('pairingStatus').textContent = 'その人はゆうれいだよ。生きてる人を選んでね'; $('pairingStatus').classList.add('error'); return; }
+
+      // ===== クールタイムチェック =====
+      const cooldownSnap = await get(ref(db, `cooldowns/${state.uid}/${partnerUid}`));
+      if (cooldownSnap.exists()) {
+        const lastTime = cooldownSnap.val();
+        const elapsed = Date.now() - lastTime;
+        if (elapsed < CONFIG.cooldownMs) {
+          const remainingMin = Math.ceil((CONFIG.cooldownMs - elapsed) / 60000);
+          $('pairingStatus').textContent = `同じ人とは${remainingMin}分後にまた話せるよ`;
+          $('pairingStatus').classList.add('error');
+          return;
+        }
+      }
+
       const [uidA, uidB] = [state.uid, partnerUid].sort();
       const pairingId = `${uidA}_${uidB}`;
       const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
       const existing = await get(ref(db, `pairings/${pairingId}`));
-      if (existing.exists() && !existing.val().completed) {
+      const mode = state.pairing.mode;
+      const ghostInitiated = state.user.isGhost;
+
+      if (existing.exists() && !existing.val().completed && existing.val().status !== 'declined' && existing.val().status !== 'cancelled') {
         // 既存に参加：相手が先に作ったので、それを引き継ぐ
-        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic: existing.val().topic, isInitiator: false, giverUid: existing.val().giverUid, receiverUid: existing.val().receiverUid, ghostInitiated: existing.val().ghostInitiated || false, mode: state.pairing.mode, unsubscribe: null, convStartedAt: 0 };
+        const d = existing.val();
+        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic: d.topic, isInitiator: false, giverUid: d.giverUid, receiverUid: d.receiverUid, ghostInitiated: d.ghostInitiated || false, mode: state.pairing.mode, status: d.status, unsubscribe: null, convStartedAt: 0 };
+        enterConversation();
       } else {
         // 新規作成：mode によって giver/receiver を決める
-        const mode = state.pairing.mode;
         const giverUid = mode === 'give' ? state.uid : partnerUid;
         const receiverUid = mode === 'give' ? partnerUid : state.uid;
-        const ghostInitiated = state.user.isGhost; // 幽霊が始めたなら必ず助けるモード
+        // もらうモード = 相手に確認を取る必要があるので status='pending' で作成
+        // あげるモード = 即時に accepted で作成（相手は気づいたら会話画面に飛ばされる）
+        const initialStatus = mode === 'give' ? 'accepted' : 'pending';
         await set(ref(db, `pairings/${pairingId}`), {
           uidA, uidB, topic,
           nameA: state.uid === uidA ? state.user.name : partnerData.name,
           nameB: state.uid === uidB ? state.user.name : partnerData.name,
           giverUid, receiverUid, ghostInitiated,
+          status: initialStatus,
+          requesterUid: state.uid, // 依頼を出した側（もらう側）
           approvedA: false, approvedB: false, completed: false, createdAt: serverTimestamp(),
         });
-        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic, isInitiator: true, giverUid, receiverUid, ghostInitiated, mode, unsubscribe: null, convStartedAt: 0 };
+        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic, isInitiator: true, giverUid, receiverUid, ghostInitiated, mode, status: initialStatus, unsubscribe: null, convStartedAt: 0 };
+
+        if (mode === 'give') {
+          // あげるモード：即座に会話画面へ
+          enterConversation();
+        } else {
+          // もらうモード：相手の応答を待つ
+          showWaitingForAccept();
+        }
       }
-      enterConversation();
     } catch (e) {
       console.error(e);
       $('pairingStatus').textContent = 'つながらないみたい…';
       $('pairingStatus').classList.add('error');
     }
+  }
+
+  // もらう側が承認を待っている画面
+  function showWaitingForAccept() {
+    $('pairingStatus').textContent = `${state.pairing.partnerName} の返事を待ってるよ…`;
+    $('pairingStatus').classList.remove('error');
+    // ペアリング状態の変化を購読
+    const pairingRef = ref(db, `pairings/${state.pairing.pairingId}`);
+    state.pairing.unsubscribe = onValue(pairingRef, snap => {
+      const d = snap.val(); if (!d) return;
+      if (d.status === 'accepted') {
+        if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
+        enterConversation();
+      } else if (d.status === 'declined') {
+        if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
+        $('pairingStatus').textContent = 'ことわられちゃった…';
+        $('pairingStatus').classList.add('error');
+        // ペアリングを削除
+        remove(ref(db, `pairings/${state.pairing.pairingId}`)).catch(()=>{});
+      }
+    });
   }
 
   function enterConversation() {
@@ -793,7 +922,27 @@
     showScreen('conversation');
     const pairingRef = ref(db, `pairings/${state.pairing.pairingId}`);
     state.pairing.unsubscribe = onValue(pairingRef, async snap => {
-      const d = snap.val(); if (!d) return;
+      const d = snap.val();
+      // ペアリングが削除されたら相手がキャンセルしたとみなす
+      if (!d) {
+        if (state.screen === 'conversation') {
+          if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
+          $('pairingStatus').textContent = '';
+          alert('相手がやめちゃったみたい');
+          state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+          if (state.user.isGhost) showScreen('ghost');
+          else showScreen('main');
+        }
+        return;
+      }
+      if (d.status === 'cancelled' && state.screen === 'conversation') {
+        if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
+        alert('相手がやめちゃったみたい');
+        state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+        if (state.user.isGhost) showScreen('ghost');
+        else showScreen('main');
+        return;
+      }
       if (d.completed && state.screen === 'conversation') { await applyTransferGain(); finishTransferLocal(); }
     });
   }
@@ -847,21 +996,24 @@
     if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
     const isGiver = state.pairing.giverUid === state.uid;
     const isGhostInitiated = state.pairing.ghostInitiated;
+    const partnerUid = state.pairing.partnerUid;
+
+    // クールタイムを記録（双方向）
+    if (partnerUid) {
+      const now = Date.now();
+      set(ref(db, `cooldowns/${state.uid}/${partnerUid}`), now).catch(()=>{});
+    }
 
     if (isGhostInitiated && isGiver) {
-      // 幽霊が助けた
       const newCount = (state.user.ghostHelped || 0) + 1;
       $('successDetail').textContent = `${state.pairing.partnerName} を助けた！　${newCount} ／ ${CONFIG.ghostRequiredHelps}`;
     } else if (isGhostInitiated && !isGiver) {
-      // 幽霊から助けてもらった
       flameEl.classList.add('blooming');
       setTimeout(() => flameEl.classList.remove('blooming'), 800);
       $('successDetail').textContent = `+${CONFIG.flameTransferGain}秒　ゆうれいから火をもらった！`;
     } else if (isGiver) {
-      // 生者があげた
       $('successDetail').textContent = `−${CONFIG.flameTransferGiverLoss}秒　火を分けてあげた`;
     } else {
-      // 生者がもらった
       flameEl.classList.add('blooming');
       setTimeout(() => flameEl.classList.remove('blooming'), 800);
       $('successDetail').textContent = `+${CONFIG.flameTransferGain}秒　ろうそくが伸びた！`;
@@ -872,10 +1024,9 @@
       const initiator = state.pairing.isInitiator;
       const pairingId = state.pairing.pairingId;
       const wasGhostHelp = isGhostInitiated && isGiver;
-      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', unsubscribe: null, convStartedAt: 0 };
+      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
       if (initiator) setTimeout(() => remove(ref(db, `pairings/${pairingId}`)).catch(()=>{}), 5000);
 
-      // 幽霊の復活判定
       if (wasGhostHelp && state.user.ghostHelped >= CONFIG.ghostRequiredHelps) {
         revive();
       } else if (state.user.isGhost) {
@@ -929,7 +1080,43 @@
 
   setInterval(() => { if (state.screen === 'main') updateCandleDisplay(); }, 200);
 
-  $('nameInput').addEventListener('input', e => { $('startBtn').disabled = e.target.value.trim().length === 0; });
+  // 名前重複チェック（自分以外の参加者と被ってないか）
+  async function checkNameAvailability(name, excludeUid = null) {
+    try {
+      const snap = await get(ref(db, 'users'));
+      if (!snap.exists()) return true;
+      const allUsers = snap.val();
+      const trimmed = name.trim();
+      return !Object.entries(allUsers).some(([uid, u]) => {
+        if (excludeUid && uid === excludeUid) return false;
+        return u.name && u.name === trimmed;
+      });
+    } catch (e) {
+      console.error(e);
+      return true; // エラー時は通す（DB側で重複は致命的ではない）
+    }
+  }
+
+  let nameCheckTimer = null;
+  $('nameInput').addEventListener('input', e => {
+    const v = e.target.value.trim();
+    $('startBtn').disabled = true;
+    $('entryStatus').textContent = '';
+    $('entryStatus').classList.remove('error');
+    if (v.length === 0) return;
+    clearTimeout(nameCheckTimer);
+    nameCheckTimer = setTimeout(async () => {
+      const ok = await checkNameAvailability(v);
+      if (!ok) {
+        $('entryStatus').textContent = 'すでに使用されている名前です';
+        $('entryStatus').classList.add('error');
+        $('startBtn').disabled = true;
+      } else {
+        $('entryStatus').textContent = '';
+        $('startBtn').disabled = false;
+      }
+    }, 300);
+  });
   $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('startBtn').disabled) $('startBtn').click(); });
   $('startBtn').addEventListener('click', () => { const name = $('nameInput').value.trim(); if (name) startGame(name); });
   $('shareBtn').addEventListener('click', () => openPairing('give'));
@@ -943,10 +1130,50 @@
     searchDebounceTimer = setTimeout(() => searchUsersByName(q), 150);
   });
 
-  $('backFromPairing').addEventListener('click', () => showScreen('main'));
+  $('backFromPairing').addEventListener('click', () => {
+    // ペアリング待機中なら解除
+    if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
+    if (state.pairing.pairingId && state.pairing.isInitiator) {
+      // 自分が作ったペアリングを削除
+      update(ref(db, `pairings/${state.pairing.pairingId}`), { status: 'cancelled' }).catch(()=>{});
+      setTimeout(() => remove(ref(db, `pairings/${state.pairing.pairingId}`)).catch(()=>{}), 1000);
+    }
+    state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+    showScreen('main');
+  });
   $('completeConvBtn').addEventListener('click', selfApproveConversation);
+  $('cancelConvBtn').addEventListener('click', cancelConversation);
   $('ghostBtn').addEventListener('click', enterGhost);
   $('ghostHelpBtn').addEventListener('click', ghostHelp);
+
+  // 火をもらう依頼の応答
+  $('acceptRequestBtn').addEventListener('click', async () => {
+    $('receiveRequestModal').classList.remove('show');
+    try {
+      await update(ref(db, `pairings/${state.pairing.pairingId}`), { status: 'accepted' });
+      state.pairing.status = 'accepted';
+      enterConversation();
+    } catch (e) { console.error(e); }
+  });
+  $('declineRequestBtn').addEventListener('click', async () => {
+    $('receiveRequestModal').classList.remove('show');
+    try {
+      await update(ref(db, `pairings/${state.pairing.pairingId}`), { status: 'declined' });
+    } catch (e) { console.error(e); }
+    state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+  });
+
+  // 会話キャンセル
+  async function cancelConversation() {
+    if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
+    try {
+      await update(ref(db, `pairings/${state.pairing.pairingId}`), { status: 'cancelled' });
+      setTimeout(() => remove(ref(db, `pairings/${state.pairing.pairingId}`)).catch(()=>{}), 1000);
+    } catch (e) { console.error(e); }
+    state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+    if (state.user.isGhost) showScreen('ghost');
+    else showScreen('main');
+  }
 
   // 名前変更モーダル
   $('editNameBtn').addEventListener('click', openNameEditModal);
@@ -954,13 +1181,28 @@
 
   function openNameEditModal() {
     $('editNameInput').value = state.user.name;
-    $('saveNameBtn').disabled = false;
+    $('saveNameBtn').disabled = true;
+    $('editNameError').textContent = '';
     $('nameEditModal').classList.add('show');
     setTimeout(() => $('editNameInput').focus(), 150);
   }
+  let editNameCheckTimer = null;
   $('editNameInput').addEventListener('input', e => {
     const v = e.target.value.trim();
-    $('saveNameBtn').disabled = v.length === 0 || v === state.user.name;
+    $('saveNameBtn').disabled = true;
+    $('editNameError').textContent = '';
+    if (v.length === 0 || v === state.user.name) return;
+    clearTimeout(editNameCheckTimer);
+    editNameCheckTimer = setTimeout(async () => {
+      const ok = await checkNameAvailability(v, state.uid);
+      if (!ok) {
+        $('editNameError').textContent = 'すでに使用されている名前です';
+        $('saveNameBtn').disabled = true;
+      } else {
+        $('editNameError').textContent = '';
+        $('saveNameBtn').disabled = false;
+      }
+    }, 300);
   });
   $('editNameInput').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !$('saveNameBtn').disabled) $('saveNameBtn').click();
