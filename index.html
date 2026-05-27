@@ -115,6 +115,7 @@
   .success-detail { font-size: 0.95rem; color: var(--pop-cream); font-weight: 500; }
 
   .ghost-screen { gap: 1.2rem; }
+  .ghost-user-name { font-size: 1rem; font-weight: 700; color: var(--ghost-mist); letter-spacing: 0.1em; opacity: 0.9; }
   .ghost-title { font-size: 2.5rem; font-weight: 900; color: var(--ghost-mist); text-shadow: 0 3px 0 #6a85b0; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
   .ghost-subtitle { font-size: 0.95rem; color: var(--ghost-blue); text-align: center; line-height: 1.8; margin-bottom: 1rem; font-weight: 500; }
   .ghost-wisp { width: 180px; height: 180px; margin: 0.5rem 0; }
@@ -145,6 +146,61 @@
   .conn-indicator { position: fixed; top: 0.6rem; right: 0.6rem; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--text-muted); z-index: 60; padding: 0.35rem 0.7rem; border: 1.5px solid var(--text-muted); border-radius: 50px; background: rgba(20, 16, 28, 0.5); font-weight: 700; }
   .conn-indicator.online { color: var(--pop-mint); border-color: var(--pop-mint); }
   .conn-indicator.offline { color: var(--danger); border-color: var(--danger); }
+
+  /* ===== ロールボタン（火をもらう／あげる） ===== */
+  .role-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.85rem 1.8rem;
+    min-width: 130px;
+  }
+  .role-btn .role-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+    font-weight: 900;
+  }
+  .role-btn .role-label {
+    font-size: 0.95rem;
+    letter-spacing: 0.15em;
+  }
+
+  /* ===== ロールバナー（ペアリング/会話画面の上部表示） ===== */
+  .role-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 216, 77, 0.15);
+    border: 2px solid rgba(255, 216, 77, 0.4);
+    border-radius: 50px;
+    padding: 0.5rem 1.2rem 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--pop-cream);
+    margin-bottom: 1.2rem;
+    letter-spacing: 0.05em;
+  }
+  .role-banner strong {
+    color: var(--candle-yellow);
+    font-weight: 900;
+    font-size: 1.05em;
+    text-shadow: 0 2px 0 var(--candle-deep);
+    margin: 0 0.1em;
+  }
+  .role-banner-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--candle-yellow);
+    color: #4a3818;
+    border-radius: 50%;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+  }
 
   /* ===== 名前検索 ===== */
   .name-search-field {
@@ -184,12 +240,27 @@
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
   .search-result-item:hover {
     background: rgba(255, 216, 77, 0.18);
     transform: translateY(-1px);
   }
   .search-result-item:active { transform: translateY(1px); }
+  .search-result-item .arrow {
+    color: var(--pop-pink);
+    font-size: 1.3em;
+    font-weight: 900;
+    margin: 0 0.2em;
+  }
+  .search-result-item .self {
+    color: var(--text-soft);
+    font-size: 0.85em;
+    opacity: 0.85;
+  }
   .search-empty {
     color: var(--text-muted);
     font-size: 0.85rem;
@@ -271,14 +342,14 @@
 </head>
 <body>
   <div class="stars" id="starField"></div>
-  <div class="conn-indicator" id="connIndicator">接 続 中</div>
+  <div class="conn-indicator" id="connIndicator">接続中…</div>
 
   <div class="screen" data-screen="entry">
     <div class="entry-mark">LET'S THINKING!</div>
     <h1 class="entry-title">いのちのロウソク</h1>
-    <p class="entry-tagline">他人の灯で、自分が燃える夜</p>
+    <p class="entry-tagline">人の灯で、自分が燃える夜</p>
     <input class="entry-name" id="nameInput" placeholder="あなたの名前は？" maxlength="12">
-    <button class="entry-start" id="startBtn" disabled>蝋燭に火を灯す</button>
+    <button class="entry-start" id="startBtn" disabled>ろうそくに火をつける</button>
     <div class="entry-status" id="entryStatus"></div>
   </div>
 
@@ -328,17 +399,28 @@
     </div>
     <div class="info-panel">
       <div class="time-remaining" id="timeDisplay">--:--</div>
-      <div class="time-label">のこり</div>
+      <div class="time-label">のこり時間</div>
     </div>
     <div class="main-actions">
-      <button class="primary-btn" id="shareBtn">火を分かつ</button>
+      <button class="primary-btn role-btn" id="receiveBtn">
+        <span class="role-icon">↓</span>
+        <span class="role-label">火をもらう</span>
+      </button>
+      <button class="primary-btn role-btn" id="shareBtn">
+        <span class="role-icon">↑</span>
+        <span class="role-label">火をあげる</span>
+      </button>
     </div>
   </div>
 
   <div class="screen hidden pairing-screen" data-screen="pairing">
-    <h2 class="pairing-title">火を分かつ</h2>
+    <div class="role-banner" id="pairingRoleBanner">
+      <span class="role-banner-arrow" id="pairingRoleArrow">↑</span>
+      <span id="pairingRoleText">あなたは火を<strong>あげる</strong>側</span>
+    </div>
+    <h2 class="pairing-title" id="pairingTitle">火をあげる</h2>
     <div class="pairing-card" style="width: min(420px, 92vw);">
-      <div class="pairing-card-label">相手の名前を入力<br><span style="font-size:0.7em; opacity:0.7;">（相手に火を分け与える）</span></div>
+      <div class="pairing-card-label" id="pairingCardLabel">話したい人の名前を入れてね</div>
       <input class="name-search-field" id="partnerNameInput" type="text" maxlength="12" placeholder="名前を入力…" autocomplete="off">
       <div class="search-results" id="searchResults"></div>
     </div>
@@ -347,18 +429,22 @@
   </div>
 
   <div class="screen hidden" data-screen="conversation">
+    <div class="role-banner" id="convRoleBanner">
+      <span class="role-banner-arrow" id="convRoleArrow">↑</span>
+      <span id="convRoleText">あなたは火を<strong>あげる</strong>側</span>
+    </div>
     <div class="conv-label">お　題</div>
     <div class="conv-partner"><span id="convPartnerName" class="name">─</span> と話そう</div>
     <div class="conv-topic" id="convTopic">─</div>
-    <div class="conv-instruction">話し終わったら、ふたりで完了をタップ</div>
+    <div class="conv-instruction">話し終わったら、ふたりとも完了をタップしてね</div>
     <button class="primary-btn" id="completeConvBtn">話し終わった！</button>
-    <div class="conv-waiting hidden" id="convWaiting">相手の完了を待っています</div>
+    <div class="conv-waiting hidden" id="convWaiting">相手の完了を待ってるよ</div>
   </div>
 
   <div class="screen hidden success-screen" data-screen="success">
     <div class="success-glyph"></div>
-    <div class="success-text">灯、分かたる</div>
-    <div class="success-detail" id="successDetail">+30秒　ふたりの蝋燭が伸びた</div>
+    <div class="success-text">火が分かれた！</div>
+    <div class="success-detail" id="successDetail">+30秒　ふたりのろうそくが伸びた</div>
   </div>
 
   <div class="screen hidden ghost-screen" data-screen="ghost">
@@ -383,16 +469,18 @@
         </g>
       </svg>
     </div>
+    <div class="ghost-user-name" id="ghostUserName">─</div>
     <h2 class="ghost-title">ゆうれい</h2>
-    <p class="ghost-subtitle">あなたの灯は消えた<br>他人の火を継ぐことで、再び命をもらえる</p>
+    <p class="ghost-subtitle">あなたの火は消えちゃった<br>3人の火を継いだら、ろうそくが復活するよ</p>
     <div class="ghost-progress">
       <span class="count" id="ghostHelpedCount">0</span> ／ <span id="ghostRequired">3</span> 人の火を継いだ
     </div>
-    <button class="primary-btn" id="ghostHelpBtn">人の蝋燭をのばす</button>
+    <button class="primary-btn" id="ghostHelpBtn">人のろうそくをのばす</button>
+    <button class="name-edit-link" id="ghostEditNameBtn" style="margin-top: 0.8rem;">名前を変える</button>
   </div>
 
   <div class="death-overlay" id="deathOverlay">
-    <div class="death-text">灯、消ゆ</div>
+    <div class="death-text">火が消えた…</div>
     <div class="death-subtext">アジャラカモクレン</div>
     <button class="primary-btn" id="ghostBtn">ゆうれいになる</button>
   </div>
@@ -401,7 +489,7 @@
   <div class="modal-overlay" id="nameEditModal">
     <div class="modal-card">
       <div class="modal-title">名前を変える</div>
-      <input class="entry-name" id="editNameInput" placeholder="新しい名前" maxlength="12">
+      <input class="entry-name" id="editNameInput" placeholder="あたらしい名前" maxlength="12">
       <div class="modal-actions">
         <button class="modal-cancel" id="cancelEditName">やめる</button>
         <button class="primary-btn" id="saveNameBtn" disabled>変える</button>
@@ -469,8 +557,8 @@
 
   const state = {
     screen: 'entry', uid: null,
-    user: { name: '', code: '', startedAt: 0, initialSeconds: 0, isGhost: false, ghostHelped: 0 },
-    pairing: { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, unsubscribe: null, convStartedAt: 0 },
+    user: { name: '', startedAt: 0, initialSeconds: 0, isGhost: false, ghostHelped: 0 },
+    pairing: { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', unsubscribe: null, convStartedAt: 0 },
     isDead: false,
   };
 
@@ -539,7 +627,7 @@
   }
 
   async function startGame(name) {
-    $('entryStatus').textContent = '蝋燭に火を灯しています…';
+    $('entryStatus').textContent = 'ろうそくに火をつけています…';
     $('entryStatus').classList.remove('error');
     try {
       if (!state.uid) { const cred = await signInAnonymously(auth); state.uid = cred.user.uid; }
@@ -565,94 +653,122 @@
         state.user.isGhost = d.isGhost;
         state.user.ghostHelped = d.ghostHelped || 0;
         if (d.name) state.user.name = d.name;
+        // 幽霊画面のカウント表示を同期
+        const countEl = $('ghostHelpedCount');
+        if (countEl) countEl.textContent = state.user.ghostHelped;
         updateCandleDisplay();
       });
     } catch (e) {
       console.error(e);
-      $('entryStatus').textContent = '接続できません。電波を確認してください。';
+      $('entryStatus').textContent = 'つながらないみたい。電波をチェックしてみてね';
       $('entryStatus').classList.add('error');
     }
   }
 
-  async function openPairing() {
+  async function openPairing(mode = 'give') {
+    state.pairing.mode = mode;
     $('partnerNameInput').value = '';
     $('searchResults').innerHTML = '';
     $('pairingStatus').textContent = '';
     $('pairingStatus').classList.remove('error');
+
+    if (mode === 'give') {
+      $('pairingTitle').textContent = '火をあげる';
+      $('pairingCardLabel').innerHTML = '火を分けてあげたい人の名前を入れてね';
+      $('pairingRoleArrow').textContent = '↑';
+      $('pairingRoleText').innerHTML = 'あなたは火を<strong>あげる</strong>側';
+    } else {
+      $('pairingTitle').textContent = '火をもらう';
+      $('pairingCardLabel').innerHTML = '火を分けてもらいたい人の名前を入れてね';
+      $('pairingRoleArrow').textContent = '↓';
+      $('pairingRoleText').innerHTML = 'あなたは火を<strong>もらう</strong>側';
+    }
+
     showScreen('pairing');
     setTimeout(() => $('partnerNameInput').focus(), 300);
   }
 
-  // 名前で検索（部分一致、大小文字無視）
   async function searchUsersByName(query) {
     const q = query.trim().toLowerCase();
     if (!q) { $('searchResults').innerHTML = ''; return; }
     try {
       const snap = await get(ref(db, 'users'));
-      if (!snap.exists()) { $('searchResults').innerHTML = '<div class="search-empty">参加者が見つかりません</div>'; return; }
+      if (!snap.exists()) { $('searchResults').innerHTML = '<div class="search-empty">まだ誰もいないみたい</div>'; return; }
       const allUsers = snap.val();
       const matches = [];
       Object.entries(allUsers).forEach(([uid, u]) => {
-        if (uid === state.uid) return; // 自分は除外
+        if (uid === state.uid) return;
         if (!u.name) return;
+        if (u.isGhost) return;
         if (u.name.toLowerCase().includes(q)) {
-          matches.push({ uid, name: u.name, isGhost: u.isGhost });
+          matches.push({ uid, name: u.name });
         }
       });
       renderSearchResults(matches);
     } catch (e) {
       console.error(e);
-      $('searchResults').innerHTML = '<div class="search-empty">検索エラー</div>';
+      $('searchResults').innerHTML = '<div class="search-empty">検索でエラーが起きたよ</div>';
     }
   }
 
   function renderSearchResults(matches) {
     const container = $('searchResults');
     if (matches.length === 0) {
-      container.innerHTML = '<div class="search-empty">該当する人が見つかりません</div>';
+      container.innerHTML = '<div class="search-empty">その名前の人は見つからないよ</div>';
       return;
     }
     container.innerHTML = '';
+    const mode = state.pairing.mode;
     matches.slice(0, 10).forEach(m => {
       const btn = document.createElement('button');
       btn.className = 'search-result-item';
-      btn.textContent = m.isGhost ? `${m.name}（ゆうれい）` : m.name;
+      // mode によって矢印の方向を変える
+      if (mode === 'give') {
+        // 自分 → 相手（火をあげる）
+        btn.innerHTML = `<span class="self">あなた</span><span class="arrow">➜</span><span>${m.name}</span>`;
+      } else {
+        // 相手 → 自分（火をもらう）
+        btn.innerHTML = `<span>${m.name}</span><span class="arrow">➜</span><span class="self">あなた</span>`;
+      }
       btn.addEventListener('click', () => startPairingWithUid(m.uid, m.name));
       container.appendChild(btn);
     });
   }
 
   async function startPairingWithUid(partnerUid, partnerName) {
-    $('pairingStatus').textContent = `${partnerName} につないでいます…`;
+    $('pairingStatus').textContent = `${partnerName} につないでるよ…`;
     $('pairingStatus').classList.remove('error');
     try {
       const partnerSnap = await get(ref(db, `users/${partnerUid}`));
-      if (!partnerSnap.exists()) { $('pairingStatus').textContent = '相手の蝋燭が見つかりません'; $('pairingStatus').classList.add('error'); return; }
+      if (!partnerSnap.exists()) { $('pairingStatus').textContent = 'その人のろうそくが見つからないよ'; $('pairingStatus').classList.add('error'); return; }
       const partnerData = partnerSnap.val();
+      if (partnerData.isGhost) { $('pairingStatus').textContent = 'その人はゆうれいだよ。生きてる人を選んでね'; $('pairingStatus').classList.add('error'); return; }
       const [uidA, uidB] = [state.uid, partnerUid].sort();
       const pairingId = `${uidA}_${uidB}`;
       const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
       const existing = await get(ref(db, `pairings/${pairingId}`));
       if (existing.exists() && !existing.val().completed) {
-        // 既存に参加：相手があげる側、自分がもらう側
-        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic: existing.val().topic, isInitiator: false, giverUid: existing.val().giverUid, receiverUid: existing.val().receiverUid, unsubscribe: null, convStartedAt: 0 };
+        // 既存に参加：相手が先に作ったので、それを引き継ぐ
+        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic: existing.val().topic, isInitiator: false, giverUid: existing.val().giverUid, receiverUid: existing.val().receiverUid, ghostInitiated: existing.val().ghostInitiated || false, mode: state.pairing.mode, unsubscribe: null, convStartedAt: 0 };
       } else {
-        // 新規作成：自分があげる側
-        const giverUid = state.uid;
-        const receiverUid = partnerUid;
+        // 新規作成：mode によって giver/receiver を決める
+        const mode = state.pairing.mode;
+        const giverUid = mode === 'give' ? state.uid : partnerUid;
+        const receiverUid = mode === 'give' ? partnerUid : state.uid;
+        const ghostInitiated = state.user.isGhost; // 幽霊が始めたなら必ず助けるモード
         await set(ref(db, `pairings/${pairingId}`), {
           uidA, uidB, topic,
           nameA: state.uid === uidA ? state.user.name : partnerData.name,
           nameB: state.uid === uidB ? state.user.name : partnerData.name,
-          giverUid, receiverUid,
+          giverUid, receiverUid, ghostInitiated,
           approvedA: false, approvedB: false, completed: false, createdAt: serverTimestamp(),
         });
-        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic, isInitiator: true, giverUid, receiverUid, unsubscribe: null, convStartedAt: 0 };
+        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic, isInitiator: true, giverUid, receiverUid, ghostInitiated, mode, unsubscribe: null, convStartedAt: 0 };
       }
       enterConversation();
     } catch (e) {
       console.error(e);
-      $('pairingStatus').textContent = '接続エラー';
+      $('pairingStatus').textContent = 'つながらないみたい…';
       $('pairingStatus').classList.add('error');
     }
   }
@@ -662,6 +778,17 @@
     $('convTopic').textContent = state.pairing.topic;
     $('completeConvBtn').classList.remove('hidden');
     $('convWaiting').classList.add('hidden');
+
+    // 会話画面のロールバナー：自分があげる側かもらう側かで表示を分ける
+    const isGiver = state.pairing.giverUid === state.uid;
+    if (isGiver) {
+      $('convRoleArrow').textContent = '↑';
+      $('convRoleText').innerHTML = 'あなたは火を<strong>あげる</strong>側';
+    } else {
+      $('convRoleArrow').textContent = '↓';
+      $('convRoleText').innerHTML = 'あなたは火を<strong>もらう</strong>側';
+    }
+
     state.pairing.convStartedAt = Date.now();
     showScreen('conversation');
     const pairingRef = ref(db, `pairings/${state.pairing.pairingId}`);
@@ -696,54 +823,117 @@
     const userSnap = await get(ref(db, `users/${state.uid}`));
     const u = userSnap.val(); if (!u) return;
 
-    // 自分が「あげる側」か「もらう側」かで処理を分ける
     const isGiver = state.pairing.giverUid === state.uid;
-    // もらう側：+30秒、あげる側：-15秒（もらった秒数の半分）
-    const flameChange = isGiver ? -CONFIG.flameTransferGiverLoss : CONFIG.flameTransferGain;
-    // startedAtの調整：会話時間ぶん未来へ＋火の変化を反映（プラスなら過去へ、マイナスなら未来へ）
-    const adjustMs = (convDurationSec - flameChange) * 1000;
-    await update(ref(db, `users/${state.uid}`), { startedAt: u.startedAt + adjustMs });
+    const isGhostInitiated = state.pairing.ghostInitiated;
+
+    if (isGhostInitiated && isGiver) {
+      // 幽霊が誰かを助けるケース：自分は減らない（蝋燭ないので）、ghostHelpedをインクリメント
+      const newHelped = (u.ghostHelped || 0) + 1;
+      await update(ref(db, `users/${state.uid}`), { ghostHelped: newHelped });
+    } else if (isGhostInitiated && !isGiver) {
+      // 幽霊から助けてもらった生者：+30秒、startedAtを調整
+      const adjustMs = (convDurationSec - CONFIG.flameTransferGain) * 1000;
+      await update(ref(db, `users/${state.uid}`), { startedAt: u.startedAt + adjustMs });
+    } else {
+      // 通常の生者同士の火移し
+      // もらう側：+30秒、あげる側：-15秒
+      const flameChange = isGiver ? -CONFIG.flameTransferGiverLoss : CONFIG.flameTransferGain;
+      const adjustMs = (convDurationSec - flameChange) * 1000;
+      await update(ref(db, `users/${state.uid}`), { startedAt: u.startedAt + adjustMs });
+    }
   }
 
   function finishTransferLocal() {
     if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
     const isGiver = state.pairing.giverUid === state.uid;
-    if (isGiver) {
-      flameEl.classList.add('blowing-out'); // 軽くしぼむ演出はしないので blooming は出さない
-      setTimeout(() => flameEl.classList.remove('blowing-out'), 100); // すぐ戻す（アニメは使わない）
-      $('successDetail').textContent = `−${CONFIG.flameTransferGiverLoss}秒　あなたの蝋燭が分かたれた`;
-    } else {
+    const isGhostInitiated = state.pairing.ghostInitiated;
+
+    if (isGhostInitiated && isGiver) {
+      // 幽霊が助けた
+      const newCount = (state.user.ghostHelped || 0) + 1;
+      $('successDetail').textContent = `${state.pairing.partnerName} を助けた！　${newCount} ／ ${CONFIG.ghostRequiredHelps}`;
+    } else if (isGhostInitiated && !isGiver) {
+      // 幽霊から助けてもらった
       flameEl.classList.add('blooming');
       setTimeout(() => flameEl.classList.remove('blooming'), 800);
-      $('successDetail').textContent = `+${CONFIG.flameTransferGain}秒　あなたの蝋燭が伸びた`;
+      $('successDetail').textContent = `+${CONFIG.flameTransferGain}秒　ゆうれいから火をもらった！`;
+    } else if (isGiver) {
+      // 生者があげた
+      $('successDetail').textContent = `−${CONFIG.flameTransferGiverLoss}秒　火を分けてあげた`;
+    } else {
+      // 生者がもらった
+      flameEl.classList.add('blooming');
+      setTimeout(() => flameEl.classList.remove('blooming'), 800);
+      $('successDetail').textContent = `+${CONFIG.flameTransferGain}秒　ろうそくが伸びた！`;
     }
+
     showScreen('success');
     setTimeout(() => {
       const initiator = state.pairing.isInitiator;
       const pairingId = state.pairing.pairingId;
-      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, unsubscribe: null, convStartedAt: 0 };
+      const wasGhostHelp = isGhostInitiated && isGiver;
+      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', unsubscribe: null, convStartedAt: 0 };
       if (initiator) setTimeout(() => remove(ref(db, `pairings/${pairingId}`)).catch(()=>{}), 5000);
-      showScreen('main');
-    }, 1800);
+
+      // 幽霊の復活判定
+      if (wasGhostHelp && state.user.ghostHelped >= CONFIG.ghostRequiredHelps) {
+        revive();
+      } else if (state.user.isGhost) {
+        showScreen('ghost');
+      } else {
+        showScreen('main');
+      }
+    }, 2000);
+  }
+
+  // 幽霊から生者へ復活
+  async function revive() {
+    try {
+      const newStartedAt = Date.now();
+      await update(ref(db, `users/${state.uid}`), {
+        isGhost: false, ghostHelped: 0,
+        startedAt: newStartedAt,
+        initialSeconds: CONFIG.ghostRebornSeconds,
+      });
+      // ローカル状態も同期（onValue購読で更新されるが念のため即時反映）
+      state.user.isGhost = false;
+      state.user.ghostHelped = 0;
+      state.user.startedAt = newStartedAt;
+      state.user.initialSeconds = CONFIG.ghostRebornSeconds;
+      state.isDead = false;
+      document.body.classList.remove('ghost-mode');
+      flameEl.classList.remove('blowing-out');
+      flameGlowEl.classList.remove('blowing-out');
+      topGroup.querySelectorAll('.smoke-wisp').forEach(el => el.remove());
+      $('deathOverlay').classList.remove('show');
+      $('successDetail').textContent = '徳を積んでろうそくが復活した！';
+      showScreen('success');
+      setTimeout(() => { updateCandleDisplay(); showScreen('main'); }, 2400);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   async function enterGhost() {
     state.user.isGhost = true;
+    state.user.ghostHelped = 0;
     document.body.classList.add('ghost-mode');
     $('deathOverlay').classList.remove('show');
+    $('ghostUserName').textContent = state.user.name;
     $('ghostHelpedCount').textContent = '0';
     await update(ref(db, `users/${state.uid}`), { isGhost: true, ghostHelped: 0 });
     showScreen('ghost');
   }
 
-  async function ghostHelp() { await openPairing(); }
+  async function ghostHelp() { await openPairing('give'); }
 
   setInterval(() => { if (state.screen === 'main') updateCandleDisplay(); }, 200);
 
   $('nameInput').addEventListener('input', e => { $('startBtn').disabled = e.target.value.trim().length === 0; });
   $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('startBtn').disabled) $('startBtn').click(); });
   $('startBtn').addEventListener('click', () => { const name = $('nameInput').value.trim(); if (name) startGame(name); });
-  $('shareBtn').addEventListener('click', () => openPairing());
+  $('shareBtn').addEventListener('click', () => openPairing('give'));
+  $('receiveBtn').addEventListener('click', () => openPairing('receive'));
 
   // 名前検索（インクリメンタル、150ms debounce）
   let searchDebounceTimer = null;
@@ -759,12 +949,15 @@
   $('ghostHelpBtn').addEventListener('click', ghostHelp);
 
   // 名前変更モーダル
-  $('editNameBtn').addEventListener('click', () => {
+  $('editNameBtn').addEventListener('click', openNameEditModal);
+  $('ghostEditNameBtn').addEventListener('click', openNameEditModal);
+
+  function openNameEditModal() {
     $('editNameInput').value = state.user.name;
     $('saveNameBtn').disabled = false;
     $('nameEditModal').classList.add('show');
     setTimeout(() => $('editNameInput').focus(), 150);
-  });
+  }
   $('editNameInput').addEventListener('input', e => {
     const v = e.target.value.trim();
     $('saveNameBtn').disabled = v.length === 0 || v === state.user.name;
@@ -780,6 +973,7 @@
       await update(ref(db, `users/${state.uid}`), { name: newName });
       state.user.name = newName;
       $('mainName').textContent = newName;
+      if ($('ghostUserName')) $('ghostUserName').textContent = newName;
       $('nameEditModal').classList.remove('show');
     } catch (e) {
       console.error(e);
