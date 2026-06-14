@@ -9,22 +9,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --night-deep: #1a1f3a;
-    --night-mid: #252b4a;
-    --candle-yellow: #ffd84d;
-    --candle-orange: #ff9a3c;
-    --candle-deep: #ff7029;
-    --flame-core: #fff5d1;
-    --pop-pink: #ff8fa3;
-    --pop-mint: #8de4d0;
-    --pop-cream: #fff4d6;
-    --text-primary: #fff4d6;
-    --text-soft: #e0d4a8;
-    --text-muted: #9a8a6b;
-    --text-dim: #5a5070;
-    --danger: #ff5e6c;
-    --ghost-blue: #a8c5e8;
-    --ghost-mist: #d4e4f5;
+    --night-deep: #1e2a52;
+    --night-mid: #232e5b;
+    --candle-yellow: #efd668;
+    --candle-orange: #d4b04a;
+    --candle-deep: #b8943a;
+    --flame-core: #fff8e0;
+    --pop-pink: #ebb0bf;
+    --pop-mint: #8dd6b8;
+    --pop-cream: #f5edd6;
+    --text-primary: #f5edd6;
+    --text-soft: #d8cfb0;
+    --text-muted: #8a8a90;
+    --text-dim: #5a5a70;
+    --danger: #e86070;
+    --ghost-blue: #8ec8d8;
+    --ghost-mist: #c8dce8;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -36,7 +36,7 @@
     user-select: none; -webkit-tap-highlight-color: transparent;
     font-weight: 500;
   }
-  body.ghost-mode { background: radial-gradient(ellipse at center 40%, #2a3855 0%, #1a2238 80%); }
+  body.ghost-mode { background: radial-gradient(ellipse at center 40%, #253550 0%, #1a2540 80%); }
 
   .stars { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
   .star { position: absolute; width: 4px; height: 4px; background: #fff; border-radius: 50%; opacity: 0.7; animation: twinkle 3s ease-in-out infinite; }
@@ -92,8 +92,8 @@
   .primary-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 0 var(--candle-deep), 0 10px 20px rgba(255, 154, 60, 0.35); }
   .primary-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--candle-deep); }
   .primary-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .ghost-mode .primary-btn { background: var(--ghost-mist); color: #1a2238; box-shadow: 0 4px 0 #6a85b0, 0 6px 15px rgba(168, 197, 232, 0.3); }
-  .ghost-mode .primary-btn:active:not(:disabled) { box-shadow: 0 2px 0 #6a85b0; }
+  .ghost-mode .primary-btn { background: var(--ghost-mist); color: #1e2a52; box-shadow: 0 4px 0 #5a7898, 0 6px 15px rgba(142, 200, 216, 0.3); }
+  .ghost-mode .primary-btn:active:not(:disabled) { box-shadow: 0 2px 0 #5a7898; }
 
   .pairing-screen { gap: 1.5rem; }
   .pairing-title { font-size: 1.6rem; font-weight: 900; color: var(--candle-yellow); margin-bottom: 0.5rem; text-shadow: 0 3px 0 var(--candle-deep); letter-spacing: 0.05em; }
@@ -122,11 +122,12 @@
   .success-glyph { width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, var(--candle-yellow) 0%, var(--candle-orange) 50%, transparent 80%); animation: glyph-glow 1.5s ease-in-out infinite; box-shadow: 0 0 40px rgba(255, 216, 77, 0.5); }
   @keyframes glyph-glow { 0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.9; } 50% { transform: scale(1.15) rotate(180deg); opacity: 1; } }
   .success-text { font-size: 1.8rem; font-weight: 900; color: var(--candle-yellow); text-shadow: 0 3px 0 var(--candle-deep); letter-spacing: 0.05em; }
-  .success-detail { font-size: 0.95rem; color: var(--pop-cream); font-weight: 500; }
+  .success-detail { font-size: 0.95rem; color: var(--pop-cream); font-weight: 500; white-space: pre-line; text-align: center; line-height: 1.6; }
 
   .ghost-screen { gap: 1.2rem; }
+  .coffin-icon { font-size: 5rem; margin-bottom: 0.5rem; }
   .ghost-user-name { font-size: 1rem; font-weight: 700; color: var(--ghost-mist); letter-spacing: 0.1em; opacity: 0.9; }
-  .ghost-title { font-size: 2.5rem; font-weight: 900; color: var(--ghost-mist); text-shadow: 0 3px 0 #6a85b0; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
+  .ghost-title { font-size: 2.5rem; font-weight: 900; color: var(--ghost-mist); text-shadow: 0 3px 0 #4a6080; letter-spacing: 0.1em; margin-bottom: 0.3rem; }
   .ghost-subtitle { font-size: 0.95rem; color: var(--ghost-blue); text-align: center; line-height: 1.8; margin-bottom: 1rem; font-weight: 500; }
   .ghost-wisp { width: 180px; height: 180px; margin: 0.5rem 0; }
   .ghost-wisp svg { width: 100%; height: 100%; overflow: visible; }
@@ -412,19 +413,19 @@
         <svg class="candle-svg" viewBox="0 0 220 500" preserveAspectRatio="xMidYMid meet">
           <defs>
             <radialGradient id="flameGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#ffd84d" stop-opacity="0.6"/>
-              <stop offset="100%" stop-color="#ff7029" stop-opacity="0"/>
+              <stop offset="0%" stop-color="#efd668" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#d4a030" stop-opacity="0"/>
             </radialGradient>
             <linearGradient id="waxGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stop-color="#a08660"/>
-              <stop offset="22%" stop-color="#fff4d6"/>
+              <stop offset="22%" stop-color="#f5edd6"/>
               <stop offset="78%" stop-color="#f0e2b8"/>
               <stop offset="100%" stop-color="#a08660"/>
             </linearGradient>
             <linearGradient id="flameGrad" x1="50%" y1="100%" x2="50%" y2="0%">
-              <stop offset="0%" stop-color="#ff7029"/>
-              <stop offset="55%" stop-color="#ffd84d"/>
-              <stop offset="100%" stop-color="#fff5d1"/>
+              <stop offset="0%" stop-color="#d4a030"/>
+              <stop offset="55%" stop-color="#efd668"/>
+              <stop offset="100%" stop-color="#fff8e0"/>
             </linearGradient>
             <filter id="smokeBlur" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="2.5"/>
@@ -434,7 +435,7 @@
             <circle class="flame-glow-anim" cx="110" cy="80" r="70" fill="url(#flameGlow)"/>
             <g class="flame-group" id="flame">
               <path d="M 110 115 Q 92 92, 98 60 Q 104 38, 110 26 Q 116 38, 122 60 Q 128 92, 110 115 Z" fill="url(#flameGrad)"/>
-              <path d="M 110 110 Q 100 92, 104 70 Q 108 55, 110 48 Q 112 55, 116 70 Q 120 92, 110 110 Z" fill="#fff5d1" opacity="0.75"/>
+              <path d="M 110 110 Q 100 92, 104 70 Q 108 55, 110 48 Q 112 55, 116 70 Q 120 92, 110 110 Z" fill="#fff8e0" opacity="0.75"/>
             </g>
             <line x1="110" y1="108" x2="110" y2="125" stroke="#3a2a1a" stroke-width="2.5"/>
           </g>
@@ -498,41 +499,17 @@
   </div>
 
   <div class="screen hidden ghost-screen" data-screen="ghost">
-    <div class="ghost-wisp">
-      <svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet">
-        <defs>
-          <radialGradient id="ghostGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#d4e4f5" stop-opacity="0.8"/>
-            <stop offset="60%" stop-color="#a8c5e8" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#a8c5e8" stop-opacity="0"/>
-          </radialGradient>
-          <filter id="ghostBlur" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3"/>
-          </filter>
-        </defs>
-        <g class="ghost-wisp-anim">
-          <circle cx="100" cy="100" r="80" fill="url(#ghostGrad)"/>
-          <path d="M 100 50 Q 80 70, 85 100 Q 78 130, 95 145 Q 100 155, 105 145 Q 122 130, 115 100 Q 120 70, 100 50 Z" fill="#d4e4f5" opacity="0.6" filter="url(#ghostBlur)"/>
-          <circle cx="88" cy="95" r="3" fill="#1a2238"/>
-          <circle cx="112" cy="95" r="3" fill="#1a2238"/>
-          <ellipse cx="100" cy="108" rx="3" ry="2" fill="#1a2238" opacity="0.6"/>
-        </g>
-      </svg>
-    </div>
+    <div class="coffin-icon">⚰️</div>
     <div class="ghost-user-name" id="ghostUserName">─</div>
-    <h2 class="ghost-title">ゆうれい</h2>
-    <p class="ghost-subtitle">あなたの火は消えちゃった<br>3人の火を継いだら、ろうそくが復活するよ</p>
-    <div class="ghost-progress">
-      <span class="count" id="ghostHelpedCount">0</span> ／ <span id="ghostRequired">3</span> 人の火を継いだ
-    </div>
-    <button class="primary-btn" id="ghostHelpBtn">人のろうそくをのばす</button>
+    <h2 class="ghost-title">棺に入ろう</h2>
+    <p class="ghost-subtitle">あなたの火は消えちゃった<br><br>入棺体験ブースに行って、<br>棺に入ってみよう。<br><br>体験が終わったら「完了」を押してね</p>
+    <button class="primary-btn" id="coffinCompleteBtn">棺に入った</button>
     <button class="name-edit-link" id="ghostEditNameBtn" style="margin-top: 0.8rem;">名前を変える</button>
   </div>
 
   <div class="death-overlay" id="deathOverlay">
-    <div class="death-text">火が消えた…</div>
-    <div class="death-subtext">アジャラカモクレン</div>
-    <button class="primary-btn" id="ghostBtn">ゆうれいになる</button>
+    <div class="death-text">火が消えてしまった...</div>
+    <button class="primary-btn" id="ghostBtn">棺に入りに行こう</button>
   </div>
 
   <!-- 名前変更モーダル -->
@@ -590,40 +567,48 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  const CONFIG = { initialMinSeconds: 300, initialMaxSeconds: 480, flameTransferGain: 30, flameTransferGiverLoss: 15, ghostRequiredHelps: 3, ghostRebornSeconds: 120, cooldownMs: 30 * 60 * 1000, waxMaxHeight: 345, waxYStart: 125 };
+  const CONFIG = { initialMinSeconds: 300, initialMaxSeconds: 1800, flameTransferGain: 30, flameTransferGiverLoss: 15, ghostRequiredHelps: 1, ghostRebornSeconds: 300, cooldownMs: 30 * 60 * 1000, waxMaxHeight: 345, waxYStart: 125 };
 
   const TOPICS = [
+    "死ンキングの意味わかる？",
+    "死を意識する時はどんな時？",
+    "死ンキング診断の結果は？",
+    "人生を漢字一文字で表すなら？",
+    "寿命を知りたい？知りたくない？",
+    "死者に会えるならだれに会いたい？",
+    "墓場まで持ってく話ってある？",
+    "最後の晩餐何食べる？",
     "何歳まで生きたい？",
-    "死ぬのは怖い？　なぜ？",
-    "自分のお葬式はどんな雰囲気にしたい？",
-    "死について考えることはある？",
-    "死ぬまでにしたいことは？",
-    "最後の晩餐、何を食べる？",
-    "墓場まで持っていく話ってある？",
-    "スマホ・PCのデータ、どうしたい？",
-    "死の先には何があると思う？",
-    "大切な人のためなら、命を捧げられる？",
-    "生きるって、何だと思う？",
-    "死ぬって、何だと思う？",
-    "「死ね」という言葉について、どう感じる？",
-    "お墓参りに行くと、気持ちは変わる？",
-    "自分の先祖について、どのくらい知ってる？",
-    "自分の墓に供えてほしい花は？",
-    "延命措置はしてほしい？",
-    "天国と地獄、自分はどちらに行くと思う？",
-    "「生きててよかった」と思う瞬間は？",
-    "法事などで供えてほしいものは？",
-    "死者に会えるなら、誰に会いたい？",
-    "最後に何かを伝えたい人はいる？",
-    "もし生まれ変わるなら、何になりたい？",
   ];
 
   const state = {
     screen: 'entry', uid: null,
     user: { name: '', startedAt: 0, initialSeconds: 0, isGhost: false, ghostHelped: 0 },
     pairing: { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', unsubscribe: null, convStartedAt: 0 },
+    usedTopics: [],
     isDead: false,
   };
+
+  // 未使用のお題をランダムに1つ選ぶ（全部使い切ったらリセット）
+  function pickUnusedTopic() {
+    const unused = TOPICS.filter(t => !state.usedTopics.includes(t));
+    if (unused.length === 0) {
+      // 全部使い切ったのでリセット
+      state.usedTopics = [];
+      return TOPICS[Math.floor(Math.random() * TOPICS.length)];
+    }
+    return unused[Math.floor(Math.random() * unused.length)];
+  }
+
+  // 使用済みお題を記録（Firebase + ローカル）
+  async function recordUsedTopic(topic) {
+    if (!state.usedTopics.includes(topic)) {
+      state.usedTopics.push(topic);
+    }
+    try {
+      await set(ref(db, `usedTopics/${state.uid}`), state.usedTopics);
+    } catch (e) { console.error(e); }
+  }
 
   const $ = id => document.getElementById(id);
   const $$ = sel => document.querySelectorAll(sel);
@@ -686,6 +671,11 @@
     flameEl.classList.add('blowing-out');
     flameGlowEl.classList.add('blowing-out');
     spawnSmoke();
+    // 死亡回数を記録
+    get(ref(db, `users/${state.uid}/deathCount`)).then(snap => {
+      const count = (snap.exists() ? snap.val() : 0) + 1;
+      update(ref(db, `users/${state.uid}`), { deathCount: count }).catch(()=>{});
+    }).catch(()=>{});
     setTimeout(() => $('deathOverlay').classList.add('show'), 2600);
   }
 
@@ -696,11 +686,17 @@
       if (!state.uid) { const cred = await signInAnonymously(auth); state.uid = cred.user.uid; }
       const initialSec = Math.floor(CONFIG.initialMinSeconds + Math.random() * (CONFIG.initialMaxSeconds - CONFIG.initialMinSeconds));
       const startedAt = Date.now();
-      await set(ref(db, `users/${state.uid}`), { name, startedAt, initialSeconds: initialSec, isGhost: false, ghostHelped: 0 });
-      // 切断時にユーザーデータを消す（イベント参加者一覧から外れる）
-      onDisconnect(ref(db, `users/${state.uid}`)).remove();
+      await set(ref(db, `users/${state.uid}`), { name, startedAt, initialSeconds: initialSec, isGhost: false, ghostHelped: 0, deathCount: 0, fireGivenCount: 0, fireReceivedCount: 0, conversationCount: 0 });
+      // 切断時はオフラインにマーク（統計データを残すため削除しない）
+      await update(ref(db, `users/${state.uid}`), { online: true });
+      onDisconnect(ref(db, `users/${state.uid}/online`)).set(false);
       state.user = { name, startedAt, initialSeconds: initialSec, isGhost: false, ghostHelped: 0 };
       state.isDead = false;
+      // 使用済みお題をFirebaseから復元
+      try {
+        const usedSnap = await get(ref(db, `usedTopics/${state.uid}`));
+        state.usedTopics = usedSnap.exists() ? usedSnap.val() : [];
+      } catch (e) { state.usedTopics = []; }
       flameEl.classList.remove('blowing-out');
       flameGlowEl.classList.remove('blowing-out');
       topGroup.querySelectorAll('.smoke-wisp').forEach(el => el.remove());
@@ -716,9 +712,6 @@
         state.user.isGhost = d.isGhost;
         state.user.ghostHelped = d.ghostHelped || 0;
         if (d.name) state.user.name = d.name;
-        // 幽霊画面のカウント表示を同期
-        const countEl = $('ghostHelpedCount');
-        if (countEl) countEl.textContent = state.user.ghostHelped;
         updateCandleDisplay();
       });
 
@@ -805,6 +798,7 @@
       Object.entries(allUsers).forEach(([uid, u]) => {
         if (uid === state.uid) return;
         if (!u.name) return;
+        if (!u.online) return; // オフラインは表示しない
         if (u.isGhost) return;
         if (u.name.toLowerCase().includes(q)) {
           matches.push({ uid, name: u.name });
@@ -865,7 +859,7 @@
 
       const [uidA, uidB] = [state.uid, partnerUid].sort();
       const pairingId = `${uidA}_${uidB}`;
-      const topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+      const topic = pickUnusedTopic();
       const existing = await get(ref(db, `pairings/${pairingId}`));
       const mode = state.pairing.mode;
       const ghostInitiated = state.user.isGhost;
@@ -1000,45 +994,35 @@
     const u = userSnap.val(); if (!u) return;
 
     const isGiver = state.pairing.giverUid === state.uid;
-    const isGhostInitiated = state.pairing.ghostInitiated;
-
-    if (isGhostInitiated && isGiver) {
-      // 幽霊が誰かを助けるケース：自分は減らない（蝋燭ないので）、ghostHelpedをインクリメント
-      const newHelped = (u.ghostHelped || 0) + 1;
-      await update(ref(db, `users/${state.uid}`), { ghostHelped: newHelped });
-    } else if (isGhostInitiated && !isGiver) {
-      // 幽霊から助けてもらった生者：+30秒、startedAtを調整
-      const adjustMs = (convDurationSec - CONFIG.flameTransferGain) * 1000;
-      await update(ref(db, `users/${state.uid}`), { startedAt: u.startedAt + adjustMs });
-    } else {
-      // 通常の生者同士の火移し
-      // もらう側：+30秒、あげる側：-15秒
-      const flameChange = isGiver ? -CONFIG.flameTransferGiverLoss : CONFIG.flameTransferGain;
-      const adjustMs = (convDurationSec - flameChange) * 1000;
-      await update(ref(db, `users/${state.uid}`), { startedAt: u.startedAt + adjustMs });
-    }
+    const flameChange = isGiver ? -CONFIG.flameTransferGiverLoss : CONFIG.flameTransferGain;
+    const adjustMs = (convDurationSec - flameChange) * 1000;
+    await update(ref(db, `users/${state.uid}`), { startedAt: u.startedAt + adjustMs });
   }
 
   function finishTransferLocal() {
     if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
     const isGiver = state.pairing.giverUid === state.uid;
-    const isGhostInitiated = state.pairing.ghostInitiated;
     const partnerUid = state.pairing.partnerUid;
 
-    // クールタイムを記録（双方向）
+    // 使用済みお題を記録
+    if (state.pairing.topic) recordUsedTopic(state.pairing.topic);
+
+    // クールタイムを記録
     if (partnerUid) {
-      const now = Date.now();
-      set(ref(db, `cooldowns/${state.uid}/${partnerUid}`), now).catch(()=>{});
+      set(ref(db, `cooldowns/${state.uid}/${partnerUid}`), Date.now()).catch(()=>{});
     }
 
-    if (isGhostInitiated && isGiver) {
-      const newCount = (state.user.ghostHelped || 0) + 1;
-      $('successDetail').textContent = `${state.pairing.partnerName} を助けた！　${newCount} ／ ${CONFIG.ghostRequiredHelps}`;
-    } else if (isGhostInitiated && !isGiver) {
-      flameEl.classList.add('blooming');
-      setTimeout(() => flameEl.classList.remove('blooming'), 800);
-      $('successDetail').textContent = `+${CONFIG.flameTransferGain}秒　ゆうれいから火をもらった！`;
-    } else if (isGiver) {
+    // 統計を記録
+    get(ref(db, `users/${state.uid}`)).then(snap => {
+      if (!snap.exists()) return;
+      const u = snap.val();
+      const updates = { conversationCount: (u.conversationCount || 0) + 1 };
+      if (isGiver) updates.fireGivenCount = (u.fireGivenCount || 0) + 1;
+      else updates.fireReceivedCount = (u.fireReceivedCount || 0) + 1;
+      update(ref(db, `users/${state.uid}`), updates).catch(()=>{});
+    }).catch(()=>{});
+
+    if (isGiver) {
       $('successDetail').textContent = `−${CONFIG.flameTransferGiverLoss}秒　火を分けてあげた`;
     } else {
       flameEl.classList.add('blooming');
@@ -1050,17 +1034,9 @@
     setTimeout(() => {
       const initiator = state.pairing.isInitiator;
       const pairingId = state.pairing.pairingId;
-      const wasGhostHelp = isGhostInitiated && isGiver;
       state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
       if (initiator) setTimeout(() => remove(ref(db, `pairings/${pairingId}`)).catch(()=>{}), 5000);
-
-      if (wasGhostHelp && state.user.ghostHelped >= CONFIG.ghostRequiredHelps) {
-        revive();
-      } else if (state.user.isGhost) {
-        showScreen('ghost');
-      } else {
-        showScreen('main');
-      }
+      showScreen('main');
     }, 2000);
   }
 
@@ -1069,13 +1045,11 @@
     try {
       const newStartedAt = Date.now();
       await update(ref(db, `users/${state.uid}`), {
-        isGhost: false, ghostHelped: 0,
+        isGhost: false,
         startedAt: newStartedAt,
         initialSeconds: CONFIG.ghostRebornSeconds,
       });
-      // ローカル状態も同期（onValue購読で更新されるが念のため即時反映）
       state.user.isGhost = false;
-      state.user.ghostHelped = 0;
       state.user.startedAt = newStartedAt;
       state.user.initialSeconds = CONFIG.ghostRebornSeconds;
       state.isDead = false;
@@ -1084,9 +1058,9 @@
       flameGlowEl.classList.remove('blowing-out');
       topGroup.querySelectorAll('.smoke-wisp').forEach(el => el.remove());
       $('deathOverlay').classList.remove('show');
-      $('successDetail').textContent = '徳を積んでろうそくが復活した！';
+      $('successDetail').textContent = '棺から出て、ろうそくが復活した！\nだれか1人と話してみよう';
       showScreen('success');
-      setTimeout(() => { updateCandleDisplay(); showScreen('main'); }, 2400);
+      setTimeout(() => { updateCandleDisplay(); showScreen('main'); }, 3000);
     } catch (e) {
       console.error(e);
     }
@@ -1094,16 +1068,18 @@
 
   async function enterGhost() {
     state.user.isGhost = true;
-    state.user.ghostHelped = 0;
     document.body.classList.add('ghost-mode');
     $('deathOverlay').classList.remove('show');
     $('ghostUserName').textContent = state.user.name;
-    $('ghostHelpedCount').textContent = '0';
-    await update(ref(db, `users/${state.uid}`), { isGhost: true, ghostHelped: 0 });
+    await update(ref(db, `users/${state.uid}`), { isGhost: true });
     showScreen('ghost');
   }
 
-  async function ghostHelp() { await openPairing('give'); }
+  // 入棺体験完了 → 復活してから1人と会話するフローへ
+  async function coffinComplete() {
+    // 復活処理
+    await revive();
+  }
 
   setInterval(() => { if (state.screen === 'main') updateCandleDisplay(); }, 200);
 
@@ -1171,7 +1147,7 @@
   $('completeConvBtn').addEventListener('click', selfApproveConversation);
   $('cancelConvBtn').addEventListener('click', cancelConversation);
   $('ghostBtn').addEventListener('click', enterGhost);
-  $('ghostHelpBtn').addEventListener('click', ghostHelp);
+  $('coffinCompleteBtn').addEventListener('click', coffinComplete);
 
   // 火をもらう依頼の応答
   $('acceptRequestBtn').addEventListener('click', async () => {
