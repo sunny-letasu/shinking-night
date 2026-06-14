@@ -196,6 +196,122 @@
     padding-bottom: 2rem;
   }
 
+  /* リセットボタン */
+  .reset-area {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(232, 96, 112, 0.2);
+    text-align: center;
+  }
+  .reset-btn {
+    background: transparent;
+    border: 2px solid var(--danger);
+    color: var(--danger);
+    padding: 0.7rem 1.5rem;
+    border-radius: 50px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover {
+    background: rgba(232, 96, 112, 0.15);
+  }
+  .reset-note {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 0.6rem;
+  }
+
+  /* 確認モーダル */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10, 12, 30, 0.85);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+    padding: 1.5rem;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal-card {
+    background: var(--bg-card);
+    border: 2px solid var(--danger);
+    border-radius: 20px;
+    padding: 2rem 1.5rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+  }
+  .modal-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--danger);
+    margin-bottom: 1rem;
+  }
+  .modal-message {
+    font-size: 0.9rem;
+    color: var(--cream);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+  .modal-confirm-input {
+    background: rgba(232, 96, 112, 0.1);
+    border: 2px solid rgba(232, 96, 112, 0.3);
+    border-radius: 12px;
+    color: var(--cream);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.7rem 1rem;
+    width: 100%;
+    text-align: center;
+    outline: none;
+    margin-bottom: 1rem;
+    transition: border-color 0.3s;
+  }
+  .modal-confirm-input:focus { border-color: var(--danger); }
+  .modal-confirm-input::placeholder { color: var(--muted); font-weight: 500; }
+  .modal-actions {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+  }
+  .modal-cancel {
+    background: transparent;
+    border: 2px solid var(--muted);
+    color: var(--muted);
+    padding: 0.7rem 1.5rem;
+    border-radius: 50px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .modal-cancel:hover { color: var(--cream); border-color: var(--cream); }
+  .modal-danger-btn {
+    background: var(--danger);
+    border: none;
+    color: #fff;
+    padding: 0.7rem 1.5rem;
+    border-radius: 50px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .modal-danger-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .modal-danger-btn:hover:not(:disabled) { opacity: 0.85; }
+  .reset-done {
+    color: var(--mint);
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    display: none;
+  }
+
   @media (max-width: 600px) {
     body { padding: 1rem; }
     .header-title { font-size: 1.4rem; }
@@ -272,9 +388,32 @@
 
 <div class="refresh-note">リアルタイム更新中 ─ データは自動で最新になります</div>
 
+<div class="reset-area">
+  <button class="reset-btn" id="resetBtn">🗑 全データをリセット</button>
+  <div class="reset-note">参加者データ・会話履歴・クールタイムをすべて削除します</div>
+  <div class="reset-done" id="resetDone">✓ リセット完了しました</div>
+</div>
+
+<!-- リセット確認モーダル -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal-card">
+    <div class="modal-title">⚠️ データリセット</div>
+    <div class="modal-message">
+      すべての参加者データ・会話履歴・<br>クールタイム・使用済みお題が削除されます。<br><br>
+      この操作は取り消せません。<br>
+      確認のため「リセット」と入力してください。
+    </div>
+    <input class="modal-confirm-input" id="resetConfirmInput" placeholder="「リセット」と入力" autocomplete="off">
+    <div class="modal-actions">
+      <button class="modal-cancel" id="resetCancelBtn">やめる</button>
+      <button class="modal-danger-btn" id="resetConfirmBtn" disabled>削除する</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+  import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAxwEeCSh5CGlz8aMKbpROo77a2eTgS1Cc",
@@ -459,6 +598,42 @@
     });
     renderAll();
   }, 3000);
+  // ===== データリセット =====
+  $('resetBtn').addEventListener('click', () => {
+    $('resetConfirmInput').value = '';
+    $('resetConfirmBtn').disabled = true;
+    $('resetModal').classList.add('show');
+    setTimeout(() => $('resetConfirmInput').focus(), 200);
+  });
+
+  $('resetConfirmInput').addEventListener('input', e => {
+    $('resetConfirmBtn').disabled = e.target.value.trim() !== 'リセット';
+  });
+
+  $('resetCancelBtn').addEventListener('click', () => {
+    $('resetModal').classList.remove('show');
+  });
+
+  $('resetConfirmBtn').addEventListener('click', async () => {
+    if ($('resetConfirmInput').value.trim() !== 'リセット') return;
+    $('resetConfirmBtn').disabled = true;
+    $('resetConfirmBtn').textContent = '削除中…';
+    try {
+      await Promise.all([
+        remove(ref(db, 'users')),
+        remove(ref(db, 'pairings')),
+        remove(ref(db, 'cooldowns')),
+        remove(ref(db, 'usedTopics')),
+      ]);
+      $('resetModal').classList.remove('show');
+      $('resetDone').style.display = 'block';
+      setTimeout(() => { $('resetDone').style.display = 'none'; }, 3000);
+    } catch (e) {
+      console.error(e);
+      alert('リセットに失敗しました: ' + e.message);
+    }
+    $('resetConfirmBtn').textContent = '削除する';
+  });
 </script>
 </body>
 </html>
