@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>運営ダッシュボード ─ 死ンキングナイト</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1e2a52;
+    --bg-card: #232e5b;
+    --bg-row: #2a3568;
+    --yellow: #efd668;
+    --orange: #d4b04a;
+    --pink: #ebb0bf;
+    --mint: #8dd6b8;
+    --blue: #8ec8d8;
+    --cream: #f5edd6;
+    --muted: #8a8a90;
+    --danger: #e86070;
+    --alive: #8dd6b8;
+    --dead: #e86070;
+    --ghost: #8ec8d8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    background: var(--bg);
+    color: var(--cream);
+    min-height: 100vh;
+    padding: 1.5rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .header-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--yellow);
+    margin-bottom: 0.3rem;
+  }
+  .header-sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 1.2rem 1.5rem;
+    min-width: 140px;
+    text-align: center;
+  }
+  .stat-number {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--yellow);
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--yellow);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(239, 214, 104, 0.2);
+  }
+
+  .tab-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    background: transparent;
+    border: 2px solid var(--muted);
+    color: var(--muted);
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--yellow);
+    border-color: var(--yellow);
+    color: #1e2a52;
+  }
+  .tab-btn:hover:not(.active) {
+    border-color: var(--cream);
+    color: var(--cream);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+  }
+  th {
+    text-align: left;
+    padding: 0.7rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    border-bottom: 2px solid rgba(239, 214, 104, 0.15);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  th:hover { color: var(--yellow); }
+  th .sort-arrow { margin-left: 0.3em; font-size: 0.7em; }
+  td {
+    padding: 0.65rem 0.8rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    white-space: nowrap;
+  }
+  tr:hover td { background: rgba(239, 214, 104, 0.05); }
+
+  .rank { font-weight: 900; color: var(--yellow); width: 2rem; text-align: center; }
+  .rank.gold { color: #efd668; font-size: 1.1em; }
+  .rank.silver { color: #c0c0c0; }
+  .rank.bronze { color: #cd7f32; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+  }
+  .status-alive { background: rgba(141, 214, 184, 0.2); color: var(--alive); }
+  .status-dead { background: rgba(232, 96, 112, 0.2); color: var(--dead); }
+  .status-ghost { background: rgba(142, 200, 216, 0.2); color: var(--ghost); }
+  .status-offline { background: rgba(138, 138, 144, 0.2); color: var(--muted); }
+
+  .candle-bar {
+    display: inline-block;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--yellow);
+    min-width: 2px;
+    max-width: 120px;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+  }
+
+  /* 表彰モード */
+  .award-section {
+    margin-top: 2rem;
+  }
+  .award-card {
+    background: var(--bg-card);
+    border: 2px solid rgba(239, 214, 104, 0.3);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+  }
+  .award-emoji { font-size: 2.5rem; }
+  .award-info { flex: 1; }
+  .award-title { font-size: 0.85rem; color: var(--muted); font-weight: 700; letter-spacing: 0.1em; }
+  .award-name { font-size: 1.5rem; font-weight: 900; color: var(--yellow); margin-top: 0.2rem; }
+  .award-detail { font-size: 0.85rem; color: var(--cream); margin-top: 0.3rem; font-weight: 500; }
+
+  .refresh-note {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 1rem; }
+    .header-title { font-size: 1.4rem; }
+    .stat-card { min-width: 100px; padding: 0.8rem 1rem; }
+    .stat-number { font-size: 1.7rem; }
+    td, th { padding: 0.5rem 0.4rem; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">🕯️ 運営ダッシュボード</div>
+  <div class="header-sub">死ンキングナイト「いのちのロウソク」</div>
+</header>
+
+<div class="stats-row" id="statsRow">
+  <div class="stat-card"><div class="stat-number" id="totalCount">0</div><div class="stat-label">参加者</div></div>
+  <div class="stat-card"><div class="stat-number" id="onlineCount">0</div><div class="stat-label">接続中</div></div>
+  <div class="stat-card"><div class="stat-number" id="aliveCount">0</div><div class="stat-label">生存中</div></div>
+  <div class="stat-card"><div class="stat-number" id="ghostCount">0</div><div class="stat-label">棺体験中</div></div>
+  <div class="stat-card"><div class="stat-number" id="totalDeaths">0</div><div class="stat-label">累計死亡数</div></div>
+  <div class="stat-card"><div class="stat-number" id="totalConvos">0</div><div class="stat-label">累計会話数</div></div>
+</div>
+
+<div class="tab-row">
+  <button class="tab-btn active" data-tab="participants">参加者一覧</button>
+  <button class="tab-btn" data-tab="ranking">ランキング</button>
+  <button class="tab-btn" data-tab="awards">表彰</button>
+</div>
+
+<!-- 参加者一覧 -->
+<div id="tab-participants">
+  <h2 class="section-title">参加者一覧</h2>
+  <table>
+    <thead>
+      <tr>
+        <th data-sort="name">名前 <span class="sort-arrow"></span></th>
+        <th data-sort="status">状態 <span class="sort-arrow"></span></th>
+        <th data-sort="remaining">残り時間 <span class="sort-arrow"></span></th>
+        <th data-sort="deathCount">死亡数 <span class="sort-arrow"></span></th>
+        <th data-sort="conversationCount">会話数 <span class="sort-arrow"></span></th>
+        <th data-sort="fireGivenCount">あげた <span class="sort-arrow"></span></th>
+        <th data-sort="fireReceivedCount">もらった <span class="sort-arrow"></span></th>
+        <th data-sort="online">接続 <span class="sort-arrow"></span></th>
+      </tr>
+    </thead>
+    <tbody id="participantTable"></tbody>
+  </table>
+</div>
+
+<!-- ランキング -->
+<div id="tab-ranking" style="display:none;">
+  <h2 class="section-title">ランキング</h2>
+
+  <h3 style="color:var(--pink); font-size:1rem; margin:1rem 0 0.5rem;">🕯️ ろうそくが長い人 TOP5</h3>
+  <table><tbody id="rankLongest"></tbody></table>
+
+  <h3 style="color:var(--mint); font-size:1rem; margin:1rem 0 0.5rem;">💀 一番死んだ人 TOP5</h3>
+  <table><tbody id="rankMostDeaths"></tbody></table>
+
+  <h3 style="color:var(--yellow); font-size:1rem; margin:1rem 0 0.5rem;">🔥 火をあげた回数 TOP5</h3>
+  <table><tbody id="rankMostGiven"></tbody></table>
+
+  <h3 style="color:var(--blue); font-size:1rem; margin:1rem 0 0.5rem;">💬 会話回数 TOP5</h3>
+  <table><tbody id="rankMostConvos"></tbody></table>
+</div>
+
+<!-- 表彰 -->
+<div id="tab-awards" style="display:none;">
+  <h2 class="section-title">表彰</h2>
+  <div id="awardCards"></div>
+</div>
+
+<div class="refresh-note">リアルタイム更新中 ─ データは自動で最新になります</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAxwEeCSh5CGlz8aMKbpROo77a2eTgS1Cc",
+    authDomain: "shinking-night.firebaseapp.com",
+    databaseURL: "https://shinking-night-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "shinking-night",
+    storageBucket: "shinking-night.firebasestorage.app",
+    messagingSenderId: "1046470684524",
+    appId: "1:1046470684524:web:b07e305deab1645d7f8d49"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const $ = id => document.getElementById(id);
+  const fmt = sec => { const s = Math.max(0, Math.floor(sec)); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; };
+
+  function calcRemaining(u) {
+    if (!u.startedAt || !u.initialSeconds) return 0;
+    if (u.isGhost) return 0;
+    return Math.max(0, u.initialSeconds - (Date.now() - u.startedAt) / 1000);
+  }
+
+  function getStatus(u) {
+    if (!u.online) return 'offline';
+    if (u.isGhost) return 'ghost';
+    if (calcRemaining(u) <= 0) return 'dead';
+    return 'alive';
+  }
+
+  function statusBadge(status) {
+    const labels = { alive: '生存', dead: '死亡', ghost: '棺体験中', offline: 'オフライン' };
+    return `<span class="status-badge status-${status}">${labels[status]}</span>`;
+  }
+
+  function rankClass(i) {
+    if (i === 0) return 'rank gold';
+    if (i === 1) return 'rank silver';
+    if (i === 2) return 'rank bronze';
+    return 'rank';
+  }
+
+  let currentSort = { key: 'remaining', dir: 'desc' };
+  let usersData = [];
+
+  // タブ切り替え
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ['participants', 'ranking', 'awards'].forEach(tab => {
+        $(`tab-${tab}`).style.display = btn.dataset.tab === tab ? '' : 'none';
+      });
+    });
+  });
+
+  // ソート
+  document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      if (currentSort.key === key) currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+      else { currentSort.key = key; currentSort.dir = 'desc'; }
+      renderAll();
+    });
+  });
+
+  function sortUsers(users, key, dir) {
+    return [...users].sort((a, b) => {
+      let va = a[key], vb = b[key];
+      if (key === 'name' || key === 'status') {
+        va = String(va || ''); vb = String(vb || '');
+        return dir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      }
+      va = Number(va || 0); vb = Number(vb || 0);
+      return dir === 'asc' ? va - vb : vb - va;
+    });
+  }
+
+  function renderAll() {
+    // 統計カード
+    const total = usersData.length;
+    const online = usersData.filter(u => u.online).length;
+    const alive = usersData.filter(u => u.status === 'alive').length;
+    const ghost = usersData.filter(u => u.status === 'ghost').length;
+    const totalDeaths = usersData.reduce((s, u) => s + (u.deathCount || 0), 0);
+    const totalConvos = usersData.reduce((s, u) => s + (u.conversationCount || 0), 0);
+
+    $('totalCount').textContent = total;
+    $('onlineCount').textContent = online;
+    $('aliveCount').textContent = alive;
+    $('ghostCount').textContent = ghost;
+    $('totalDeaths').textContent = totalDeaths;
+    $('totalConvos').textContent = Math.floor(totalConvos / 2); // 両者がカウントするので半分
+
+    // 参加者テーブル
+    const sorted = sortUsers(usersData, currentSort.key, currentSort.dir);
+    $('participantTable').innerHTML = sorted.map(u => {
+      const rem = u.remaining;
+      const barW = Math.min(120, Math.max(2, rem / 18 * 120));
+      return `<tr>
+        <td><strong>${u.name}</strong></td>
+        <td>${statusBadge(u.status)}</td>
+        <td><span class="candle-bar" style="width:${barW}px;opacity:${u.status === 'alive' ? 1 : 0.3}"></span>${fmt(rem)}</td>
+        <td>${u.deathCount || 0}</td>
+        <td>${u.conversationCount || 0}</td>
+        <td>${u.fireGivenCount || 0}</td>
+        <td>${u.fireReceivedCount || 0}</td>
+        <td>${u.online ? '🟢' : '⚫'}</td>
+      </tr>`;
+    }).join('');
+
+    // ランキング
+    renderRanking('rankLongest', usersData, 'remaining', v => fmt(v));
+    renderRanking('rankMostDeaths', usersData, 'deathCount', v => `${v}回`);
+    renderRanking('rankMostGiven', usersData, 'fireGivenCount', v => `${v}回`);
+    renderRanking('rankMostConvos', usersData, 'conversationCount', v => `${v}回`);
+
+    // 表彰カード
+    renderAwards();
+  }
+
+  function renderRanking(id, users, key, format) {
+    const sorted = [...users].sort((a, b) => (b[key] || 0) - (a[key] || 0)).slice(0, 5);
+    $(id).innerHTML = sorted.map((u, i) => `<tr>
+      <td class="${rankClass(i)}">${i + 1}</td>
+      <td><strong>${u.name}</strong></td>
+      <td>${format(u[key] || 0)}</td>
+    </tr>`).join('');
+  }
+
+  function renderAwards() {
+    const awards = [
+      { emoji: '🕯️', title: 'ろうそくが一番長い人', key: 'remaining', format: v => `残り ${fmt(v)}` },
+      { emoji: '💀', title: '一番死んだ人', key: 'deathCount', format: v => `${v}回死亡` },
+      { emoji: '🔥', title: '一番火をあげた人', key: 'fireGivenCount', format: v => `${v}回` },
+      { emoji: '💬', title: '一番たくさん話した人', key: 'conversationCount', format: v => `${v}回の会話` },
+      { emoji: '🤝', title: '一番火をもらった人', key: 'fireReceivedCount', format: v => `${v}回` },
+    ];
+
+    $('awardCards').innerHTML = awards.map(a => {
+      const sorted = [...usersData].sort((x, y) => (y[a.key] || 0) - (x[a.key] || 0));
+      const winner = sorted[0];
+      if (!winner || !(winner[a.key])) return '';
+      return `<div class="award-card">
+        <div class="award-emoji">${a.emoji}</div>
+        <div class="award-info">
+          <div class="award-title">${a.title}</div>
+          <div class="award-name">${winner.name}</div>
+          <div class="award-detail">${a.format(winner[a.key] || 0)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Firebase リアルタイム購読
+  onValue(ref(db, 'users'), snap => {
+    if (!snap.exists()) { usersData = []; renderAll(); return; }
+    const all = snap.val();
+    usersData = Object.entries(all).map(([uid, u]) => ({
+      uid,
+      name: u.name || '(名前なし)',
+      online: !!u.online,
+      isGhost: !!u.isGhost,
+      startedAt: u.startedAt || 0,
+      initialSeconds: u.initialSeconds || 0,
+      deathCount: u.deathCount || 0,
+      fireGivenCount: u.fireGivenCount || 0,
+      fireReceivedCount: u.fireReceivedCount || 0,
+      conversationCount: u.conversationCount || 0,
+      remaining: calcRemaining(u),
+      status: getStatus(u),
+    }));
+    renderAll();
+  });
+
+  // 残り時間を1秒ごとに更新（Firebaseの更新とは別に表示だけ更新）
+  setInterval(() => {
+    usersData.forEach(u => {
+      if (u.status === 'alive') {
+        u.remaining = Math.max(0, u.initialSeconds - (Date.now() - u.startedAt) / 1000);
+        if (u.remaining <= 0) u.status = 'dead';
+      }
+    });
+    renderAll();
+  }, 3000);
+</script>
+</body>
+</html>
