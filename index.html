@@ -551,8 +551,8 @@
   }
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-  import { getDatabase, ref, set, get, update, onValue, onDisconnect, serverTimestamp, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+  import { getDatabase, ref, set, get, update, onValue, serverTimestamp, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAxwEeCSh5CGlz8aMKbpROo77a2eTgS1Cc",
@@ -685,10 +685,9 @@
       if (!state.uid) { const cred = await signInAnonymously(auth); state.uid = cred.user.uid; }
       const initialSec = Math.floor(CONFIG.initialMinSeconds + Math.random() * (CONFIG.initialMaxSeconds - CONFIG.initialMinSeconds));
       const startedAt = Date.now();
-      await set(ref(db, `users/${state.uid}`), { name, startedAt, initialSeconds: initialSec, isGhost: false, ghostHelped: 0, deathCount: 0, fireGivenCount: 0, fireReceivedCount: 0, conversationCount: 0 });
-      // 切断時はオフラインにマーク（統計データを残すため削除しない）
-      await update(ref(db, `users/${state.uid}`), { online: true });
-      onDisconnect(ref(db, `users/${state.uid}/online`)).set(false);
+      await set(ref(db, `users/${state.uid}`), { name, startedAt, initialSeconds: initialSec, isGhost: false, ghostHelped: 0, deathCount: 0, fireGivenCount: 0, fireReceivedCount: 0, conversationCount: 0, lastSeen: Date.now() });
+      // ハートビート開始（30秒ごとにlastSeenを更新）
+      startHeartbeat();
       state.user = { name, startedAt, initialSeconds: initialSec, isGhost: false, ghostHelped: 0 };
       state.isDead = false;
       // 使用済みお題をFirebaseから復元
@@ -794,10 +793,12 @@
       if (!snap.exists()) { $('searchResults').innerHTML = '<div class="search-empty">まだ誰もいないみたい</div>'; return; }
       const allUsers = snap.val();
       const matches = [];
+      const now = Date.now();
+      const ACTIVE_THRESHOLD = 2 * 60 * 1000; // 2分以内にアクティブなら表示
       Object.entries(allUsers).forEach(([uid, u]) => {
         if (uid === state.uid) return;
         if (!u.name) return;
-        if (!u.online) return; // オフラインは表示しない
+        if (!u.lastSeen || (now - u.lastSeen) > ACTIVE_THRESHOLD) return; // 2分以上前は表示しない
         if (u.isGhost) return;
         if (u.name.toLowerCase().includes(q)) {
           matches.push({ uid, name: u.name });
@@ -1224,7 +1225,100 @@
     }
   });
 
-  showScreen('entry');
+  // ===== ハートビート（30秒ごとにlastSeenを更新） =====
+  let heartbeatInterval = null;
+  function startHeartbeat() {
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+    // 即座に1回更新
+    if (state.uid) update(ref(db, `users/${state.uid}`), { lastSeen: Date.now() }).catch(()=>{});
+    heartbeatInterval = setInterval(() => {
+      if (state.uid) update(ref(db, `users/${state.uid}`), { lastSeen: Date.now() }).catch(()=>{});
+    }, 30000);
+  }
+  // ページが再表示された時（スマホのスリープ解除など）にもハートビートを打つ
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.uid) {
+      update(ref(db, `users/${state.uid}`), { lastSeen: Date.now() }).catch(()=>{});
+      // 表示復帰時にろうそく表示も即更新
+      if (state.screen === 'main') updateCandleDisplay();
+    }
+  });
+
+  // ===== セッション自動復帰 =====
+  // ページロード時に既存のFirebase Authセッションがあれば、蝋燭画面に復帰する
+  async function tryRestoreSession(user) {
+    try {
+      state.uid = user.uid;
+      const snap = await get(ref(db, `users/${state.uid}`));
+      if (!snap.exists()) return false; // データがない→新規ユーザー
+      const d = snap.val();
+      if (!d.name || !d.startedAt) return false; // データが不完全
+
+      // ユーザーデータを復元
+      state.user = {
+        name: d.name,
+        startedAt: d.startedAt,
+        initialSeconds: d.initialSeconds || 0,
+        isGhost: !!d.isGhost,
+        ghostHelped: d.ghostHelped || 0,
+      };
+      state.isDead = false;
+
+      // 使用済みお題を復元
+      try {
+        const usedSnap = await get(ref(db, `usedTopics/${state.uid}`));
+        state.usedTopics = usedSnap.exists() ? usedSnap.val() : [];
+      } catch (e) { state.usedTopics = []; }
+
+      // ハートビート開始
+      startHeartbeat();
+
+      // 受信リクエスト監視開始
+      startListeningForIncomingRequests();
+
+      // ユーザーデータの変更を購読
+      onValue(ref(db, `users/${state.uid}`), snap => {
+        const d = snap.val(); if (!d) return;
+        state.user.startedAt = d.startedAt;
+        state.user.initialSeconds = d.initialSeconds;
+        state.user.isGhost = d.isGhost;
+        state.user.ghostHelped = d.ghostHelped || 0;
+        if (d.name) state.user.name = d.name;
+        updateCandleDisplay();
+      });
+
+      // UIを復元
+      flameEl.classList.remove('blowing-out');
+      flameGlowEl.classList.remove('blowing-out');
+      topGroup.querySelectorAll('.smoke-wisp').forEach(el => el.remove());
+      $('deathOverlay').classList.remove('show');
+      $('mainName').textContent = d.name;
+
+      if (d.isGhost) {
+        document.body.classList.add('ghost-mode');
+        $('ghostUserName').textContent = d.name;
+        showScreen('ghost');
+      } else {
+        document.body.classList.remove('ghost-mode');
+        updateCandleDisplay();
+        showScreen('main');
+      }
+      return true;
+    } catch (e) {
+      console.error('Session restore failed:', e);
+      return false;
+    }
+  }
+
+  // 初期化：既存セッションがあれば復帰、なければエントリー画面
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const restored = await tryRestoreSession(user);
+      if (!restored) showScreen('entry');
+    } else {
+      showScreen('entry');
+    }
+  });
 </script>
 </body>
 </html>
