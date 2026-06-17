@@ -436,8 +436,14 @@
     return Math.max(0, u.initialSeconds - (Date.now() - u.startedAt) / 1000);
   }
 
+  const ACTIVE_THRESHOLD = 2 * 60 * 1000; // 2分以内ならアクティブ
+
+  function isActive(u) {
+    return u.lastSeen && (Date.now() - u.lastSeen) < ACTIVE_THRESHOLD;
+  }
+
   function getStatus(u) {
-    if (!u.online) return 'offline';
+    if (!isActive(u)) return 'offline';
     if (u.isGhost) return 'ghost';
     if (calcRemaining(u) <= 0) return 'dead';
     return 'alive';
@@ -574,7 +580,8 @@
     usersData = Object.entries(all).map(([uid, u]) => ({
       uid,
       name: u.name || '(名前なし)',
-      online: !!u.online,
+      lastSeen: u.lastSeen || 0,
+      online: u.lastSeen && (Date.now() - u.lastSeen) < ACTIVE_THRESHOLD,
       isGhost: !!u.isGhost,
       startedAt: u.startedAt || 0,
       initialSeconds: u.initialSeconds || 0,
@@ -588,9 +595,11 @@
     renderAll();
   });
 
-  // 残り時間を1秒ごとに更新（Firebaseの更新とは別に表示だけ更新）
+  // 残り時間とアクティブ状態を3秒ごとに更新
   setInterval(() => {
     usersData.forEach(u => {
+      u.online = u.lastSeen && (Date.now() - u.lastSeen) < ACTIVE_THRESHOLD;
+      u.status = u.online ? (u.isGhost ? 'ghost' : (u.remaining <= 0 ? 'dead' : 'alive')) : 'offline';
       if (u.status === 'alive') {
         u.remaining = Math.max(0, u.initialSeconds - (Date.now() - u.startedAt) / 1000);
         if (u.remaining <= 0) u.status = 'dead';
