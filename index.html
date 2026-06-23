@@ -578,6 +578,9 @@
     "墓場まで持ってく話ってある？",
     "最後の晩餐何食べる？",
     "何歳まで生きたい？",
+    "死ンキング診断の結果は？",
+    "このイベントを何で知った？",
+    "イベントに参加しようと思ったのはなぜ？",
   ];
 
   const state = {
@@ -678,7 +681,10 @@
     setTimeout(() => $('deathOverlay').classList.add('show'), 2600);
   }
 
+  let isStartingGame = false;
+
   async function startGame(name) {
+    isStartingGame = true;
     $('entryStatus').textContent = 'ろうそくに火をつけています…';
     $('entryStatus').classList.remove('error');
     try {
@@ -716,9 +722,17 @@
       // 自分宛の保留中ペアリング依頼を監視
       startListeningForIncomingRequests();
     } catch (e) {
-      console.error(e);
-      $('entryStatus').textContent = 'つながらないみたい。電波をチェックしてみてね';
+      console.error('startGame error:', e);
+      // Firebase権限エラーの判別
+      const msg = String(e.message || e.code || e);
+      if (msg.includes('PERMISSION_DENIED') || msg.includes('permission')) {
+        $('entryStatus').textContent = 'データベースのアクセス権限がないよ。運営にFirebaseのルールを確認してもらってね';
+      } else {
+        $('entryStatus').textContent = 'つながらないみたい。電波をチェックしてみてね';
+      }
       $('entryStatus').classList.add('error');
+    } finally {
+      isStartingGame = false;
     }
   }
 
@@ -1297,12 +1311,19 @@
       return true;
     } catch (e) {
       console.error('Session restore failed:', e);
+      const msg = String(e.message || e.code || e);
+      if (msg.includes('PERMISSION_DENIED') || msg.includes('permission')) {
+        $('entryStatus').textContent = 'Firebaseのルールの期限が切れているかも。運営に確認してもらってね';
+        $('entryStatus').classList.add('error');
+      }
       return false;
     }
   }
 
   // 初期化：既存セッションがあれば復帰、なければエントリー画面
   onAuthStateChanged(auth, async (user) => {
+    // startGame実行中は無視（signInAnonymouslyが再トリガーするため）
+    if (isStartingGame) return;
     if (user) {
       const restored = await tryRestoreSession(user);
       if (!restored) showScreen('entry');
