@@ -495,7 +495,7 @@
   <div class="screen hidden success-screen" data-screen="success">
     <div class="success-glyph"></div>
     <div class="success-text">火が分かれた！</div>
-    <div class="success-detail" id="successDetail">+30秒　ふたりのろうそくが伸びた</div>
+    <div class="success-detail" id="successDetail">ろうそくが伸びた</div>
   </div>
 
   <div class="screen hidden ghost-screen" data-screen="ghost">
@@ -567,7 +567,7 @@
   const auth = getAuth(app);
   const db = getDatabase(app);
 
-  const CONFIG = { initialMinSeconds: 300, initialMaxSeconds: 1800, flameTransferGain: 30, flameTransferGiverLoss: 15, ghostRequiredHelps: 1, ghostRebornSeconds: 300, cooldownMs: 30 * 60 * 1000, waxMaxHeight: 345, waxYStart: 125 };
+  const CONFIG = { initialMinSeconds: 300, initialMaxSeconds: 1800, flameTransferMinGain: 60, flameTransferMaxGain: 600, flameTransferGiverLoss: 15, ghostRequiredHelps: 1, ghostRebornSeconds: 1800, waxMaxHeight: 345, waxYStart: 125 };
 
   const TOPICS = [
     "死ンキングの意味わかる？",
@@ -753,7 +753,8 @@
       giverUid: pairingData.giverUid,
       receiverUid: pairingData.receiverUid,
       ghostInitiated: pairingData.ghostInitiated || false,
-      mode: 'give', // 自分は giver
+      fireGain: pairingData.fireGain || 60,
+      mode: 'give',
       status: 'pending',
       unsubscribe: null,
       convStartedAt: 0,
@@ -844,19 +845,6 @@
       const partnerData = partnerSnap.val();
       if (partnerData.isGhost) { $('pairingStatus').textContent = 'その人はゆうれいだよ。生きてる人を選んでね'; $('pairingStatus').classList.add('error'); return; }
 
-      // ===== クールタイムチェック =====
-      const cooldownSnap = await get(ref(db, `cooldowns/${state.uid}/${partnerUid}`));
-      if (cooldownSnap.exists()) {
-        const lastTime = cooldownSnap.val();
-        const elapsed = Date.now() - lastTime;
-        if (elapsed < CONFIG.cooldownMs) {
-          const remainingMin = Math.ceil((CONFIG.cooldownMs - elapsed) / 60000);
-          $('pairingStatus').textContent = `同じ人とは${remainingMin}分後にまた話せるよ`;
-          $('pairingStatus').classList.add('error');
-          return;
-        }
-      }
-
       const [uidA, uidB] = [state.uid, partnerUid].sort();
       const pairingId = `${uidA}_${uidB}`;
       const topic = pickUnusedTopic();
@@ -867,25 +855,27 @@
       if (existing.exists() && !existing.val().completed && existing.val().status !== 'declined' && existing.val().status !== 'cancelled') {
         // 既存に参加：相手が先に作ったので、それを引き継ぐ
         const d = existing.val();
-        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic: d.topic, isInitiator: false, giverUid: d.giverUid, receiverUid: d.receiverUid, ghostInitiated: d.ghostInitiated || false, mode: state.pairing.mode, status: d.status, unsubscribe: null, convStartedAt: 0 };
+        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic: d.topic, isInitiator: false, giverUid: d.giverUid, receiverUid: d.receiverUid, ghostInitiated: d.ghostInitiated || false, fireGain: d.fireGain || 60, mode: state.pairing.mode, status: d.status, unsubscribe: null, convStartedAt: 0 };
         enterConversation();
       } else {
         // 新規作成：mode によって giver/receiver を決める
         const giverUid = mode === 'give' ? state.uid : partnerUid;
         const receiverUid = mode === 'give' ? partnerUid : state.uid;
         // もらうモード = 相手に確認を取る必要があるので status='pending' で作成
-        // あげるモード = 即時に accepted で作成（相手は気づいたら会話画面に飛ばされる）
+        // あげるモード = 即時に accepted で作成
         const initialStatus = mode === 'give' ? 'accepted' : 'pending';
+        // ランダムな火の量を決定（1〜10分 = 60〜600秒）
+        const fireGain = Math.floor(CONFIG.flameTransferMinGain + Math.random() * (CONFIG.flameTransferMaxGain - CONFIG.flameTransferMinGain));
         await set(ref(db, `pairings/${pairingId}`), {
-          uidA, uidB, topic,
+          uidA, uidB, topic, fireGain,
           nameA: state.uid === uidA ? state.user.name : partnerData.name,
           nameB: state.uid === uidB ? state.user.name : partnerData.name,
           giverUid, receiverUid, ghostInitiated,
           status: initialStatus,
-          requesterUid: state.uid, // 依頼を出した側（もらう側）
+          requesterUid: state.uid,
           approvedA: false, approvedB: false, completed: false, createdAt: serverTimestamp(),
         });
-        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic, isInitiator: true, giverUid, receiverUid, ghostInitiated, mode, status: initialStatus, unsubscribe: null, convStartedAt: 0 };
+        state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic, isInitiator: true, giverUid, receiverUid, ghostInitiated, fireGain, mode, status: initialStatus, unsubscribe: null, convStartedAt: 0 };
 
         if (mode === 'give') {
           // あげるモード：即座に会話画面へ
@@ -994,7 +984,9 @@
     const u = userSnap.val(); if (!u) return;
 
     const isGiver = state.pairing.giverUid === state.uid;
-    const flameChange = isGiver ? -CONFIG.flameTransferGiverLoss : CONFIG.flameTransferGain;
+    const fireGain = state.pairing.fireGain || 60;
+    // あげる側：-15秒（固定）、もらう側：+ランダム（1〜10分）
+    const flameChange = isGiver ? -CONFIG.flameTransferGiverLoss : fireGain;
     const adjustMs = (convDurationSec - flameChange) * 1000;
     await update(ref(db, `users/${state.uid}`), { startedAt: u.startedAt + adjustMs });
   }
@@ -1003,14 +995,13 @@
     if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
     const isGiver = state.pairing.giverUid === state.uid;
     const partnerUid = state.pairing.partnerUid;
+    const fireGain = state.pairing.fireGain || 60;
+    const gainMin = Math.floor(fireGain / 60);
+    const gainSec = fireGain % 60;
+    const gainText = gainSec > 0 ? `${gainMin}分${gainSec}秒` : `${gainMin}分`;
 
     // 使用済みお題を記録
     if (state.pairing.topic) recordUsedTopic(state.pairing.topic);
-
-    // クールタイムを記録
-    if (partnerUid) {
-      set(ref(db, `cooldowns/${state.uid}/${partnerUid}`), Date.now()).catch(()=>{});
-    }
 
     // 統計を記録
     get(ref(db, `users/${state.uid}`)).then(snap => {
@@ -1027,14 +1018,14 @@
     } else {
       flameEl.classList.add('blooming');
       setTimeout(() => flameEl.classList.remove('blooming'), 800);
-      $('successDetail').textContent = `+${CONFIG.flameTransferGain}秒　ろうそくが伸びた！`;
+      $('successDetail').textContent = `+${gainText}　ろうそくが伸びた！`;
     }
 
     showScreen('success');
     setTimeout(() => {
       const initiator = state.pairing.isInitiator;
       const pairingId = state.pairing.pairingId;
-      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, fireGain: 0, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
       if (initiator) setTimeout(() => remove(ref(db, `pairings/${pairingId}`)).catch(()=>{}), 5000);
       showScreen('main');
     }, 2000);
