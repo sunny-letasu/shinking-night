@@ -586,7 +586,7 @@
   const state = {
     screen: 'entry', uid: null,
     user: { name: '', startedAt: 0, initialSeconds: 0, isGhost: false, ghostHelped: 0 },
-    pairing: { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', unsubscribe: null, convStartedAt: 0 },
+    pairing: { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, fireGain: 0, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 },
     usedTopics: [],
     isDead: false,
   };
@@ -682,6 +682,7 @@
   }
 
   let isStartingGame = false;
+  let userDataUnsubscribe = null;
 
   async function startGame(name) {
     isStartingGame = true;
@@ -709,7 +710,8 @@
       $('mainName').textContent = name;
       updateCandleDisplay();
       showScreen('main');
-      onValue(ref(db, `users/${state.uid}`), snap => {
+      if (userDataUnsubscribe) userDataUnsubscribe();
+      userDataUnsubscribe = onValue(ref(db, `users/${state.uid}`), snap => {
         const d = snap.val(); if (!d) return;
         state.user.startedAt = d.startedAt;
         state.user.initialSeconds = d.initialSeconds;
@@ -870,7 +872,7 @@
         // 既存に参加：相手が先に作ったので、それを引き継ぐ
         const d = existing.val();
         state.pairing = { pairingId, partnerUid, partnerName: partnerData.name, topic: d.topic, isInitiator: false, giverUid: d.giverUid, receiverUid: d.receiverUid, ghostInitiated: d.ghostInitiated || false, fireGain: d.fireGain || 60, mode: state.pairing.mode, status: d.status, unsubscribe: null, convStartedAt: 0 };
-        enterConversation();
+        await enterConversation();
       } else {
         // 新規作成：mode によって giver/receiver を決める
         const giverUid = mode === 'give' ? state.uid : partnerUid;
@@ -907,21 +909,36 @@
   }
 
   // もらう側が承認を待っている画面
+  let waitingTimeout = null;
   function showWaitingForAccept() {
     $('pairingStatus').textContent = `${state.pairing.partnerName} の返事を待ってるよ…`;
     $('pairingStatus').classList.remove('error');
+    // 2分でタイムアウト
+    if (waitingTimeout) clearTimeout(waitingTimeout);
+    waitingTimeout = setTimeout(() => {
+      if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
+      if (state.pairing.pairingId) {
+        update(ref(db, `pairings/${state.pairing.pairingId}`), { status: 'cancelled' }).catch(()=>{});
+        setTimeout(() => remove(ref(db, `pairings/${state.pairing.pairingId}`)).catch(()=>{}), 1000);
+      }
+      $('pairingStatus').textContent = '返事がなかったみたい…もどるね';
+      $('pairingStatus').classList.add('error');
+      state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, fireGain: 0, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+      setTimeout(() => showScreen('main'), 1500);
+    }, 120000);
     // ペアリング状態の変化を購読
     const pairingRef = ref(db, `pairings/${state.pairing.pairingId}`);
-    state.pairing.unsubscribe = onValue(pairingRef, snap => {
+    state.pairing.unsubscribe = onValue(pairingRef, async snap => {
       const d = snap.val(); if (!d) return;
       if (d.status === 'accepted') {
+        if (waitingTimeout) { clearTimeout(waitingTimeout); waitingTimeout = null; }
         if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
-        enterConversation();
+        await enterConversation();
       } else if (d.status === 'declined') {
+        if (waitingTimeout) { clearTimeout(waitingTimeout); waitingTimeout = null; }
         if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
         $('pairingStatus').textContent = 'ことわられちゃった…';
         $('pairingStatus').classList.add('error');
-        // ペアリングを削除
         remove(ref(db, `pairings/${state.pairing.pairingId}`)).catch(()=>{});
       }
     });
@@ -1002,12 +1019,18 @@
     }
   }
 
+  let isApplyingGain = false;
   async function applyTransferGain() {
-    const pairingId = state.pairing.pairingId;
-    const flag = `gainApplied_${state.uid}`;
-    const snap = await get(ref(db, `pairings/${pairingId}/${flag}`));
-    if (snap.exists()) return;
-    await update(ref(db, `pairings/${pairingId}`), { [flag]: true });
+    // ローカル再入防止（onValueが複数回fireしても1回だけ実行）
+    if (isApplyingGain) return;
+    isApplyingGain = true;
+    try {
+      const pairingId = state.pairing.pairingId;
+      if (!pairingId) return;
+      const flag = `gainApplied_${state.uid}`;
+      const snap = await get(ref(db, `pairings/${pairingId}/${flag}`));
+      if (snap.exists()) return;
+      await update(ref(db, `pairings/${pairingId}`), { [flag]: true });
 
     // Firebaseから最新のペアリングデータを読んで役割を確定
     const pairingSnap = await get(ref(db, `pairings/${pairingId}`));
@@ -1044,6 +1067,8 @@
     state.pairing.giverUid = pairingData.giverUid;
     state.pairing.receiverUid = pairingData.receiverUid;
     state.pairing.fireGain = fireGain;
+    } catch (e) { console.error('applyTransferGain error:', e); }
+    finally { isApplyingGain = false; }
   }
 
   function finishTransferLocal() {
@@ -1168,7 +1193,14 @@
   });
   $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('startBtn').disabled) $('startBtn').click(); });
   $('startBtn').addEventListener('click', () => { const name = $('nameInput').value.trim(); if (name) startGame(name); });
-  $('shareBtn').addEventListener('click', () => openPairing('give'));
+  $('shareBtn').addEventListener('click', () => {
+    const remaining = calcSecondsLeft();
+    if (remaining <= 20) {
+      alert('ろうそくが短すぎて火をあげられないよ');
+      return;
+    }
+    openPairing('give');
+  });
   $('receiveBtn').addEventListener('click', () => openPairing('receive'));
 
   // 名前検索（インクリメンタル、150ms debounce）
@@ -1187,7 +1219,7 @@
       update(ref(db, `pairings/${state.pairing.pairingId}`), { status: 'cancelled' }).catch(()=>{});
       setTimeout(() => remove(ref(db, `pairings/${state.pairing.pairingId}`)).catch(()=>{}), 1000);
     }
-    state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+    state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, fireGain: 0, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
     showScreen('main');
   });
   $('completeConvBtn').addEventListener('click', selfApproveConversation);
@@ -1201,7 +1233,7 @@
     try {
       await update(ref(db, `pairings/${state.pairing.pairingId}`), { status: 'accepted' });
       state.pairing.status = 'accepted';
-      enterConversation();
+      await enterConversation();
     } catch (e) { console.error(e); }
   });
   $('declineRequestBtn').addEventListener('click', async () => {
@@ -1209,7 +1241,7 @@
     try {
       await update(ref(db, `pairings/${state.pairing.pairingId}`), { status: 'declined' });
     } catch (e) { console.error(e); }
-    state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+    state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, fireGain: 0, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
   });
 
   // 会話キャンセル
@@ -1219,7 +1251,7 @@
       await update(ref(db, `pairings/${state.pairing.pairingId}`), { status: 'cancelled' });
       setTimeout(() => remove(ref(db, `pairings/${state.pairing.pairingId}`)).catch(()=>{}), 1000);
     } catch (e) { console.error(e); }
-    state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+    state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, fireGain: 0, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
     if (state.user.isGhost) showScreen('ghost');
     else showScreen('main');
   }
@@ -1323,7 +1355,8 @@
       startListeningForIncomingRequests();
 
       // ユーザーデータの変更を購読
-      onValue(ref(db, `users/${state.uid}`), snap => {
+      if (userDataUnsubscribe) userDataUnsubscribe();
+      userDataUnsubscribe = onValue(ref(db, `users/${state.uid}`), snap => {
         const d = snap.val(); if (!d) return;
         state.user.startedAt = d.startedAt;
         state.user.initialSeconds = d.initialSeconds;
