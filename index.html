@@ -893,7 +893,7 @@
 
         if (mode === 'give') {
           // あげるモード：即座に会話画面へ
-          enterConversation();
+          await enterConversation();
         } else {
           // もらうモード：相手の応答を待つ
           showWaitingForAccept();
@@ -927,13 +927,25 @@
     });
   }
 
-  function enterConversation() {
+  async function enterConversation() {
+    // Firebaseから最新のペアリングデータを読んで、ローカル状態を同期する（競合防止）
+    try {
+      const freshSnap = await get(ref(db, `pairings/${state.pairing.pairingId}`));
+      if (freshSnap.exists()) {
+        const fresh = freshSnap.val();
+        state.pairing.giverUid = fresh.giverUid;
+        state.pairing.receiverUid = fresh.receiverUid;
+        state.pairing.fireGain = fresh.fireGain || 60;
+        if (fresh.topic) state.pairing.topic = fresh.topic;
+      }
+    } catch (e) { console.error('Failed to sync pairing data:', e); }
+
     $('convPartnerName').textContent = state.pairing.partnerName;
     $('convTopic').textContent = state.pairing.topic;
     $('completeConvBtn').classList.remove('hidden');
     $('convWaiting').classList.add('hidden');
 
-    // 会話画面のロールバナー：自分があげる側かもらう側かで表示を分ける
+    // 会話画面のロールバナー：Firebaseから取得した最新の役割で表示
     const isGiver = state.pairing.giverUid === state.uid;
     if (isGiver) {
       $('convRoleArrow').textContent = '↑';
@@ -948,22 +960,26 @@
     const pairingRef = ref(db, `pairings/${state.pairing.pairingId}`);
     state.pairing.unsubscribe = onValue(pairingRef, async snap => {
       const d = snap.val();
-      // ペアリングが削除されたら相手がキャンセルしたとみなす
       if (!d) {
         if (state.screen === 'conversation') {
           if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
           $('pairingStatus').textContent = '';
           alert('相手がやめちゃったみたい');
-          state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+          state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, fireGain: 0, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
           if (state.user.isGhost) showScreen('ghost');
           else showScreen('main');
         }
         return;
       }
+      // リアルタイムで役割を常に同期（途中で書き換わっても対応）
+      if (d.giverUid) state.pairing.giverUid = d.giverUid;
+      if (d.receiverUid) state.pairing.receiverUid = d.receiverUid;
+      if (d.fireGain) state.pairing.fireGain = d.fireGain;
+
       if (d.status === 'cancelled' && state.screen === 'conversation') {
         if (state.pairing.unsubscribe) { state.pairing.unsubscribe(); state.pairing.unsubscribe = null; }
         alert('相手がやめちゃったみたい');
-        state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
+        state.pairing = { pairingId: null, partnerUid: null, partnerName: '', topic: '', isInitiator: false, giverUid: null, receiverUid: null, ghostInitiated: false, fireGain: 0, mode: 'give', status: null, unsubscribe: null, convStartedAt: 0 };
         if (state.user.isGhost) showScreen('ghost');
         else showScreen('main');
         return;
@@ -993,16 +1009,28 @@
     if (snap.exists()) return;
     await update(ref(db, `pairings/${pairingId}`), { [flag]: true });
 
+    // Firebaseから最新のペアリングデータを読んで役割を確定（競合対策）
+    const pairingSnap = await get(ref(db, `pairings/${pairingId}`));
+    const pairingData = pairingSnap.val();
+    if (!pairingData) return;
+    const isGiver = pairingData.giverUid === state.uid;
+    const fireGain = pairingData.fireGain || 60;
+
     const convDurationSec = state.pairing.convStartedAt > 0 ? (Date.now() - state.pairing.convStartedAt) / 1000 : 0;
     const userSnap = await get(ref(db, `users/${state.uid}`));
     const u = userSnap.val(); if (!u) return;
 
-    const isGiver = state.pairing.giverUid === state.uid;
-    const fireGain = state.pairing.fireGain || 60;
     // あげる側：-15秒（固定）、もらう側：+ランダム（1〜10分）
+    // flameChange: giver=-15, receiver=+fireGain
+    // adjustMs: 会話時間の補正 ＋ 火の増減 を startedAt にずらす
     const flameChange = isGiver ? -CONFIG.flameTransferGiverLoss : fireGain;
-    const adjustMs = (convDurationSec - flameChange) * 1000;
+    const adjustMs = (convDurationSec + flameChange) * 1000;
     await update(ref(db, `users/${state.uid}`), { startedAt: u.startedAt + adjustMs });
+
+    // ローカルのstate.pairingも同期（finishTransferLocalで使うため）
+    state.pairing.giverUid = pairingData.giverUid;
+    state.pairing.receiverUid = pairingData.receiverUid;
+    state.pairing.fireGain = fireGain;
   }
 
   function finishTransferLocal() {
