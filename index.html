@@ -1009,23 +1009,36 @@
     if (snap.exists()) return;
     await update(ref(db, `pairings/${pairingId}`), { [flag]: true });
 
-    // Firebaseから最新のペアリングデータを読んで役割を確定（競合対策）
+    // Firebaseから最新のペアリングデータを読んで役割を確定
     const pairingSnap = await get(ref(db, `pairings/${pairingId}`));
     const pairingData = pairingSnap.val();
     if (!pairingData) return;
     const isGiver = pairingData.giverUid === state.uid;
     const fireGain = pairingData.fireGain || 60;
 
-    const convDurationSec = state.pairing.convStartedAt > 0 ? (Date.now() - state.pairing.convStartedAt) / 1000 : 0;
     const userSnap = await get(ref(db, `users/${state.uid}`));
     const u = userSnap.val(); if (!u) return;
 
-    // あげる側：-15秒（固定）、もらう側：+ランダム（1〜10分）
-    // flameChange: giver=-15, receiver=+fireGain
-    // adjustMs: 会話時間の補正 ＋ 火の増減 を startedAt にずらす
-    const flameChange = isGiver ? -CONFIG.flameTransferGiverLoss : fireGain;
-    const adjustMs = (convDurationSec + flameChange) * 1000;
-    await update(ref(db, `users/${state.uid}`), { startedAt: u.startedAt + adjustMs });
+    // ① 会話が始まった瞬間の残り時間を算出（会話中は時間が止まっていた前提）
+    const convStart = state.pairing.convStartedAt || Date.now();
+    const remainingAtConvStart = u.initialSeconds - (convStart - u.startedAt) / 1000;
+
+    // ② 役割に応じて目標の残り時間を決定
+    let targetRemaining;
+    if (isGiver) {
+      // あげる側：15秒減る
+      targetRemaining = Math.max(0, remainingAtConvStart - CONFIG.flameTransferGiverLoss);
+    } else {
+      // もらう側：fireGain秒増える
+      targetRemaining = remainingAtConvStart + fireGain;
+    }
+
+    // ③ 目標の残り時間になるよう startedAt を逆算して書き込む
+    // 式：remaining = initialSeconds - (now - startedAt) / 1000
+    // → startedAt = now - (initialSeconds - remaining) * 1000
+    const nowMs = Date.now();
+    const newStartedAt = nowMs - (u.initialSeconds - targetRemaining) * 1000;
+    await update(ref(db, `users/${state.uid}`), { startedAt: newStartedAt });
 
     // ローカルのstate.pairingも同期（finishTransferLocalで使うため）
     state.pairing.giverUid = pairingData.giverUid;
